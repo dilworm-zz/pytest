@@ -16,8 +16,17 @@ class MySocket:
     else:
       self.sock = sock
   
-  def fileno():
+  def getsocket(self):
+    return self.sock
+
+  def setnoblock(self):
+    self.sock.setblocking(False)
+
+  def fileno(self):
     return self.sock.fileno()
+
+  def getpeername(self):
+    return self.sock.getpeername()
 
   def connect(self, host, port):
     self.sock.connect((host,port))

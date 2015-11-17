@@ -23,7 +23,7 @@ class RequestHandle():
 				break
 		except RuntimeError, msg:
 			print u'异常，断开连接'
-			print u'', msg
+			print type(msg)
 		finally:
 			self.mysocket.close()
 
@@ -60,6 +60,10 @@ class BlockServer():
 def main(argv):
 	if len(argv) > 3:
 		print u'Error: 参数过多'
+		print u'使用：'
+		print u'\t1. "python svr.py"'
+		print u'\t2. "python svr.py 8888"'
+		print u'\t2. "python svr.py 127.0.0.1 8888"'
 		return
 	
 	host = HOST

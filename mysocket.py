@@ -1,10 +1,11 @@
 # -*- coding=utf8 -*-
+# 暂时不支持发送中文
 import string
 import socket
 import struct
 
-HEAD_SIZE = 5#
-HEAD_PAD = '&'
+HEAD_SIZE = 5 # 前五个字节指名后面的数据包大小 
+HEAD_PAD = '&'# 用于填充前5个字节中的“字位置”
 MAX_SEND_SIZE = 4096 - HEAD_SIZE
 
 class MySocket:
@@ -21,7 +22,6 @@ class MySocket:
 	def send2(self, msg):
 		msg = struct.pack('s', msg)
 		print len(msg)
-
 
 	def send(self, msg):
 		msglen = len(msg)
@@ -74,5 +74,3 @@ class MySocket:
 
 	def close(self):
 		self.sock.close()
-		
-				

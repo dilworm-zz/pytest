@@ -17,13 +17,21 @@ class Item:
     self.socket = socket
     self.data = data
 
-def userInputThreadHandler(mainQueue,)
+def userInputThreadHandler(mainQueue, svrSockets):
+  while True:
+    command = raw_input()
+    print command
+    #post command to every connected server's Queue
+    for s in svrSockets:
+      mainQueue[s].put(Item('command', s, command))
+
+
+  
 
 def networkThreadHandler(svrSockets, msgQueues):
-  rl, wl, xl = svrSockList, [], []
-  for k,v in svrSockets:
+  rl, wl, xl = svrSockets, [], []
+  for s in svrSockets:
     v.setnoblock() # 设置为非阻塞
-    rl.append(k)
 
   while True:
     rl, wl, xl = select.select(rl, wl, xl, 3000)
@@ -31,24 +39,34 @@ def networkThreadHandler(svrSockets, msgQueues):
       continue
 
     for s in rl:
-      data = svrSockets[s].recv()
+      data = s.recv()
 
       if data == '':
         print u'Error: 连接断开', s.getpeername() 
         rl.remove(s)
-        del msgQueues[s]
+       #del msgQueues[s]
       else:
         item = Item('read', s, data)
-        msgQueues['main'].put(item) # 投递到主队列进行处理
+        msgQueues['main'].put(item) # 接收到的消息投递到主队列进行处理
         wl.append(s) # 等下一次用户命令
 
     for s in wl:
-      item = msgQueues[s].get_nowait()
-      if item and item.socket:
-        svrSockets[s].send(item.data)
-        rl.append(s) # 准备接收服务器返回的消息
-       else:
-         wl.append(s)
+      try:
+        item = msgQueues[s].get_nowait() 
+
+        if item and item.socket:
+          s.send(item.data)
+          print u'send commomd \" ', itme.data , '\" to ', s.getpeername()
+          rl.append(s) # 准备接收服务器返回的消息
+        else:
+          wl.append(s)
+      except Queue.Empty:
+        wl.append(s)
+    
+    for s in xl:
+      print u'select 异常,断开 ', s.getpeername()
+      xl.removes(s)
+      #del msgQueues[s]
 
       
 def OnQueueMsg(msg):
@@ -71,7 +89,7 @@ def main():
    
   network_thread = thread.Thread(target = networkThreadHandler, args = g_messageQueues)
   network_thread.start()
-  userInput_thread = thread.Thread(target = userInputThreadHandler, args =())
+  userInput_thread = thread.Thread(target = userInputThreadHandler, args =(g_messageQueues, svrSockets))
   while True:
     OnQueueMsg(g_messageQueues['main'].get())
 

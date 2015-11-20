@@ -1,7 +1,6 @@
 # -*- coding=utf8 -*-
-import select
-import thread
-import Queue
+import os
+import select, threading, Queue
 import configparser as cf
 from mysocket import MySocket
 
@@ -9,68 +8,78 @@ from mysocket import MySocket
 g_messageQueues = {} #每个scoket分配一个队列用于读写
 g_messageQueues['main'] = Queue.Queue()
 
-svrSockets = {}
+svrSockets = []
 
-class Item:
-  def __int__(self, msgType, socket, data):
+class MsgItem:
+  def __init__(self, msgType, socket, data):
     self.msgType = msgType
     self.socket = socket
     self.data = data
 
 def userInputThreadHandler(mainQueue, svrSockets):
   while True:
+    print 'input command: '
+    print 'input q', mainQueue
+    print 'snlen ', len(svrSockets)
     command = raw_input()
-    print command
+    print 'raw_input', command
     #post command to every connected server's Queue
-    for s in svrSockets:
-      mainQueue[s].put(Item('command', s, command))
+#    for s in svrSockets:
+#      if s not in mainQueue: 
+#        mainQueue[s] = Queue.Queue()
+#      mainQueue[s].put(MsgItem('command', s, command))
+#      print 'put ', command , ' into ', s.getpeername()
 
-
-  
-
-def networkThreadHandler(svrSockets, msgQueues):
-  rl, wl, xl = svrSockets, [], []
+def networkThreadHandler(msgQueues, svrSockets):
+  print 'slen network', len(svrSockets)
+  rl, wl, xl = [], svrSockets, []
   for s in svrSockets:
-    v.setnoblock() # 设置为非阻塞
+    s.setnoblock() # 设置为非阻塞
 
   while True:
-    rl, wl, xl = select.select(rl, wl, xl, 3000)
-    if (rl or wl or xl):
+    readable, writable, exceptional = select.select(rl, wl, xl, 30)
+    print 'been here'
+    if not (readable or writable or exceptional):
+      print 'not'
       continue
 
-    for s in rl:
-      data = s.recv()
-
+    for s in readable:
+      data = exceptionals.recv()
       if data == '':
         print u'Error: 连接断开', s.getpeername() 
-        rl.remove(s)
+        readable.remove(s)
        #del msgQueues[s]
       else:
-        item = Item('read', s, data)
+        print 'recv data ', data
+        item = MsgItem('read', s, data)
         msgQueues['main'].put(item) # 接收到的消息投递到主队列进行处理
-        wl.append(s) # 等下一次用户命令
+        if s not in wl:
+          writable.append(s) # 等待用户命令
 
     for s in wl:
       try:
+        if s not in msgQueues:
+          wl.append(s)
+          continue
+
         item = msgQueues[s].get_nowait() 
 
         if item and item.socket:
+          print u'send commomd \" ', item.data , '\" to ', s.getpeername()
           s.send(item.data)
-          print u'send commomd \" ', itme.data , '\" to ', s.getpeername()
-          rl.append(s) # 准备接收服务器返回的消息
-        else:
-          wl.append(s)
+          if s not in readable:
+            rl.append(s) # 准备接收服务器返回的消息
       except Queue.Empty:
-        wl.append(s)
+        continue
     
     for s in xl:
       print u'select 异常,断开 ', s.getpeername()
       xl.removes(s)
       #del msgQueues[s]
 
-      
-def OnQueueMsg(msg):
-  pass
+def OnQueueMsg(msgItem):
+  if msgItem.msgType == 'read':
+    print '[%s]: %s' % (msgItem.socket.getpeername(), msgItem.data) 
 
 def main():
   serverList = cf.GetServerList('./serverlist.txt')
@@ -83,13 +92,21 @@ def main():
     try:
       s = MySocket()
       s.connect(addr[0], addr[1])
-      svrSockets[s.getsocket()] = s
+      svrSockets.append(s)
     except:
       print u'Error: 连接', addr, u'失败'
    
-  network_thread = thread.Thread(target = networkThreadHandler, args = g_messageQueues)
+  print 'golbal queue:', g_messageQueues
+  print 'slen ', len(svrSockets)
+  print 'svrsocklist ', svrSockets
+  network_thread = threading.Thread(target = networkThreadHandler, args = (g_messageQueues, svrSockets))
+  print 'slen ', len(svrSockets)
+  print 'svrsocklist ', svrSockets
+  network_thread = threading.Thread(target = networkThreadHandler, args = (g_messageQueues, svrSockets))
+  userInput_thread = threading.Thread(target = userInputThreadHandler, args =(g_messageQueues, svrSockets))
   network_thread.start()
-  userInput_thread = thread.Thread(target = userInputThreadHandler, args =(g_messageQueues, svrSockets))
+  userInput_thread.start()
+
   while True:
     OnQueueMsg(g_messageQueues['main'].get())
 

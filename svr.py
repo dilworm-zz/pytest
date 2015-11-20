@@ -15,16 +15,17 @@ class RequestHandle():
   def Run(self):
     try:
       while True:
-        data = self.mysocket.recv()
         print 'Run..'
-        print data 
+        data = self.mysocket.recv()
+        if not data:
+          print 'data null'
         self.mysocket.send('i got you')
         self.mysocket.send(data)
         break
     except RuntimeError, msg:
-      print u'异常，断开连接'
-      print type(msg)
+      pass
     finally:
+      print 'close',self.mysocket.getpeername()
       self.mysocket.close()
 
   def OnReady(msg):pass

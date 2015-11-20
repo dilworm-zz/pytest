@@ -56,7 +56,8 @@ class MySocket:
     while totalrecv < HEAD_SIZE:
       chunk = self.sock.recv(HEAD_SIZE - totalrecv)
       if chunk == '':
-        raise RuntimeError(u"socket 连接断开")
+        print u'连接断开 ', self.sock.getpeername()
+        return 0
       chunks = chunks + chunk
       totalrecv = totalrecv + len(chunk)
     
@@ -65,12 +66,15 @@ class MySocket:
 
   def recv(self):
     dataSize = self._recv_head_size()
+    if not dataSize:
+      return ''
     remain = dataSize
     chunks = ''
     while remain > 0:
       chunk = self.sock.recv(remain)
       if chunk == '':
-        raise RuntimeError(u'断开连接')
+        print u'连接断开 ', self.sock.getpeername()
+        return ''
       chunks = chunks + chunk
       remain = remain - len(chunk)
     return chunks

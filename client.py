@@ -1,14 +1,14 @@
 # -*- coding=utf8 -*-
-import os
+import os, sys
 import select, threading, Queue
 import configparser as cf
 from mysocket import MySocket
 
 
 g_messageQueues = {} #每个scoket分配一个队列用于读写
-g_messageQueues['main'] = Queue.Queue()
+g_messageQueues['main'] = Queue.Queue() #主队列用于接收服务器的返回消息
 
-svrSockets = []
+svrSockets = [] #MySocket 列表，对应每一个服务器
 
 class MsgItem:
   def __init__(self, msgType, socket, data):
@@ -17,28 +17,30 @@ class MsgItem:
     self.data = data
 
 def userInputThreadHandler(mainQueue, svrSockets):
+#  print 'user input q', mainQueue
+#  print 'user input socket size', len(svrSockets)
   while True:
-    print 'input command: '
-    print 'input q', mainQueue
-    print 'snlen ', len(svrSockets)
+    print '\nplease input command: \n'
     command = raw_input()
-    print 'raw_input', command
+    if command == 'exit':
+      #sys.exit()
+      os._exit(0)
     #post command to every connected server's Queue
-#    for s in svrSockets:
-#      if s not in mainQueue: 
-#        mainQueue[s] = Queue.Queue()
-#      mainQueue[s].put(MsgItem('command', s, command))
-#      print 'put ', command , ' into ', s.getpeername()
+    for s in svrSockets:
+      if s not in mainQueue: 
+        mainQueue[s] = Queue.Queue()
+      mainQueue[s].put(MsgItem('command', s, command))
+      print 'put' + command + 'into ', s.getpeername()
 
 def networkThreadHandler(msgQueues, svrSockets):
-  print 'slen network', len(svrSockets)
+ # print 'network socket size', len(svrSockets)
+ # print 'network msgQueue', msgQueues
   rl, wl, xl = [], svrSockets, []
   for s in svrSockets:
     s.setnoblock() # 设置为非阻塞
 
   while True:
     readable, writable, exceptional = select.select(rl, wl, xl, 30)
-    print 'been here'
     if not (readable or writable or exceptional):
       print 'not'
       continue
@@ -50,19 +52,20 @@ def networkThreadHandler(msgQueues, svrSockets):
         readable.remove(s)
        #del msgQueues[s]
       else:
-        print 'recv data ', data
+        #print 'recv data ', data
         item = MsgItem('read', s, data)
         msgQueues['main'].put(item) # 接收到的消息投递到主队列进行处理
-        if s not in wl:
-          writable.append(s) # 等待用户命令
 
     for s in writable:
       try:
+        if s not in msgQueues:
+          msgQueues[s] = Queue.Queue()
+
         item = msgQueues[s].get_nowait() 
 
         if item and item.socket:
           s.send(item.data)
-          print u'send commomd \" ', itme.data , '\" to ', s.getpeername()
+          print u'send commomd \"', item.data , '\" to ', s.getpeername()
           if s not in rl:
             rl.append(s) # 准备接收服务器返回的消息
       except Queue.Empty:
@@ -92,9 +95,9 @@ def main():
     except:
       print u'Error: 连接', addr, u'失败'
    
-  print 'golbal queue:', g_messageQueues
-  print 'slen ', len(svrSockets)
-  print 'svrsocklist ', svrSockets
+ # print 'golbal queue:', g_messageQueues
+ # print 'global socket list size', len(svrSockets)
+ # print 'svrsocklist ', svrSockets
   network_thread = threading.Thread(target = networkThreadHandler, args = (g_messageQueues, svrSockets))
   userInput_thread = threading.Thread(target = userInputThreadHandler, args =(g_messageQueues, svrSockets))
   network_thread.start()

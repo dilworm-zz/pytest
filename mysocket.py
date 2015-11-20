@@ -30,6 +30,11 @@ class MySocket:
 
   def connect(self, host, port):
     self.sock.connect((host,port))
+    self.peer_host = host
+    self.peer_port = port
+
+  def getpeername(self):
+    return self.peer_host, self.peer_port
 
   def send2(self, msg):
     msg = struct.pack('s', msg)

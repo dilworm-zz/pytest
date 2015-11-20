@@ -31,21 +31,24 @@ class RequestHandle():
       print 'finally'
       self.mysocket.close()
 
-  def OnReady(msg):pass
+  def OnReady(*args):
+    pass
   def OnUpdate(msg):pass
 
   
 class BlockServer():
-  def __init__(self, mysocket = None):
+  def __init__(self, mysocket = None, MsgHandler = None):
     if mysocket is None:
       self.mysocket = MySocket()
     else:
       self.mysocket = mysocket
+    self.msg_handler = MsgHandler
   
-  def __init__(self, host, port):
+  def __init__(self, host, port, MsgHandler = None):
     self.mysocket = MySocket()
     self.host = host
     self.port = port
+    self.msg_handler = MsgHandler
   
   def run_forever(self):
     print u'listening on ', self.host,':', self.port
@@ -59,15 +62,16 @@ class BlockServer():
       requestHandler = RequestHandle(cli)
       requestHandler.Run()
 
-
+def printhelp():
+  print u'使用格式 python svr.py [[host] port] \n eg: '
+  print u'\t1. "python svr.py"'
+  print u'\t2. "python svr.py 8888"'
+  print u'\t2. "python svr.py 127.0.0.1 8888"'
 
 def main(argv):
   if len(argv) > 3:
     print u'Error: 参数过多'
-    print u'使用：'
-    print u'\t1. "python svr.py"'
-    print u'\t2. "python svr.py 8888"'
-    print u'\t2. "python svr.py 127.0.0.1 8888"'
+    printhelp()
     return
   
   host = HOST
@@ -75,7 +79,6 @@ def main(argv):
 
   if len(argv) == 2:
     port = int(argv[1])
-    print 'p ', port
   if len(argv) == 3:
     host = argv[1]
     port = int(argv[2])

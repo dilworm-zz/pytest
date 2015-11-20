@@ -49,7 +49,8 @@ def networkThreadHandler(msgQueues, svrSockets):
       data = s.recv()
       if data == '':
         print u'Error: 连接断开', s.getpeername() 
-        readable.remove(s)
+        print 'remove'
+        rl.remove(s)
        #del msgQueues[s]
       else:
         #print 'recv data ', data

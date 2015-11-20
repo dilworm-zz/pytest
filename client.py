@@ -44,7 +44,7 @@ def networkThreadHandler(msgQueues, svrSockets):
       continue
 
     for s in readable:
-      data = exceptionals.recv()
+      data = s.recv()
       if data == '':
         print u'Error: 连接断开', s.getpeername() 
         readable.remove(s)
@@ -56,23 +56,19 @@ def networkThreadHandler(msgQueues, svrSockets):
         if s not in wl:
           writable.append(s) # 等待用户命令
 
-    for s in wl:
+    for s in writable:
       try:
-        if s not in msgQueues:
-          wl.append(s)
-          continue
-
         item = msgQueues[s].get_nowait() 
 
         if item and item.socket:
-          print u'send commomd \" ', item.data , '\" to ', s.getpeername()
           s.send(item.data)
-          if s not in readable:
+          print u'send commomd \" ', itme.data , '\" to ', s.getpeername()
+          if s not in rl:
             rl.append(s) # 准备接收服务器返回的消息
       except Queue.Empty:
         continue
     
-    for s in xl:
+    for s in exceptional:
       print u'select 异常,断开 ', s.getpeername()
       xl.removes(s)
       #del msgQueues[s]
@@ -100,13 +96,9 @@ def main():
   print 'slen ', len(svrSockets)
   print 'svrsocklist ', svrSockets
   network_thread = threading.Thread(target = networkThreadHandler, args = (g_messageQueues, svrSockets))
-  print 'slen ', len(svrSockets)
-  print 'svrsocklist ', svrSockets
-  network_thread = threading.Thread(target = networkThreadHandler, args = (g_messageQueues, svrSockets))
   userInput_thread = threading.Thread(target = userInputThreadHandler, args =(g_messageQueues, svrSockets))
   network_thread.start()
   userInput_thread.start()
-
   while True:
     OnQueueMsg(g_messageQueues['main'].get())
 

@@ -18,14 +18,17 @@ class RequestHandle():
         print 'Run..'
         data = self.mysocket.recv()
         if not data:
-          print 'data null'
-        self.mysocket.send('i got you')
-        self.mysocket.send(data)
-        break
+          break
+        else:
+          print 'recv', data
+
+        respone = 'i got you \"' + data + '"'
+        self.mysocket.send(respone)
     except RuntimeError, msg:
+      print msg
       pass
     finally:
-      print 'close',self.mysocket.getpeername()
+      print 'finally'
       self.mysocket.close()
 
   def OnReady(msg):pass

@@ -59,10 +59,15 @@ class MySocket:
     chunks = ''
     totalrecv = 0
     while totalrecv < HEAD_SIZE:
-      chunk = self.sock.recv(HEAD_SIZE - totalrecv)
+      try:
+        chunk = self.sock.recv(HEAD_SIZE - totalrecv)
+      except socket.error, msg:
+        print msg
+        return 0
       if chunk == '':
         print u'连接断开 ', self.sock.getpeername()
         return 0
+
       chunks = chunks + chunk
       totalrecv = totalrecv + len(chunk)
     

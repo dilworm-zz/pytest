@@ -56,7 +56,7 @@ class RedisClient(asyncore.dispatcher):
         self.set_writable()
 
     def handle_connect(self):
-        print u"connected to " + self.host + u":" + str(self.port)
+        print u"{0}: connected to {1}:{2}".format(time.time(), self.host, self.port)
 
     def handle_read(self):
         #print 'handle_read...'

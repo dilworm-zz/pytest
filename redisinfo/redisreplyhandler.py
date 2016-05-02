@@ -52,7 +52,7 @@ class RedisReplyService:
 
     def add_reply(self, item):
         try:
-            print "{0}: add_reply ".format(item.time)
+            #print "{0}: add_reply ".format(item.time)
             self.queue.put_nowait(item)
         except Queue.Full:
             print "AddRely failed, queue full."

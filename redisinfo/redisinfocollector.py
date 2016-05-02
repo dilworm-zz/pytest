@@ -5,12 +5,12 @@ import configparser as cf
 from redisreplycallback import RedisReplyCallback
 import redisreplyhandler as rrh
 
-exec_interval = 1
+exec_interval = 5
 
 def timer_check_connection(collector):
     for p in collector.peers:
         if not (p.is_connected() or p.is_connecting()):
-            print "{0}: connecting {1}:{2}".format(time.time(), p.host, p.port)
+            #print "{0}: connecting {1}:{2}".format(time.time(), p.host, p.port)
             p.connect()
     threading.Timer(conn_timeout, timer_check_connection, args=[collector]).start()
 

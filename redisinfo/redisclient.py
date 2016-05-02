@@ -5,7 +5,7 @@ import threading
 import traceback
 import Queue
 
-CONN_TIMEOUT = 10
+CONN_TIMEOUT = 15
 
 class RedisClient(asyncore.dispatcher):
     redis_reply = ''# redis reply, bulk strings
@@ -26,7 +26,7 @@ class RedisClient(asyncore.dispatcher):
         try:
             self.queue.put_nowait(time.time()) #simply put an item to notify redisclient 
         except Queue.Full:
-            print u"add_cmd failed, queue is full."
+            print u"Error: add_cmd failed, queue is full."
 
     def set_callback(self, cb):
         self.cb = cb
@@ -99,7 +99,7 @@ class RedisClient(asyncore.dispatcher):
                 try:
                     t = self.queue.get_nowait()
                     self.buf = self.cmd
-                    print "2 true"
+                    #print "2 true"
                     return True
                 except Queue.Empty:
                     return False

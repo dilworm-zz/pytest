@@ -30,7 +30,7 @@ class RedisReplyService:
                     self.handle_info(item.data)
             except Exception as e:
                 print e
-                print "unknown exception inside RedisReplyHandler.run"
+                print "Error: unknown exception inside RedisReplyHandler.run"
 
     def load_dbconfig(self, conf_file):
         cfp = ConfigParser.ConfigParser()
@@ -89,7 +89,7 @@ class RedisReplyService:
 
 
     def writeinfo2db(self, info):
-        print "writeinfo2db"
+        print "{0}: writeinfo2db ".format(time.time())
 
         if self.db is None:
             self.try_connect()

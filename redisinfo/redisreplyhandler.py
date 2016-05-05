@@ -88,16 +88,89 @@ class RedisReplyService:
         return True
 
 
+    # Extra from redis info and map to database table
+    class __redisinfo_record:
+        _cols = dict(
+                redis_id=1,
+                redisdb_name="",
+                host="",
+                port=0,
+                pid=0,
+
+                connected_clients=0,
+                keys=0,
+                keys_expires=0,
+                used_memory_human="",
+                used_memory_peak_human=0.0,
+
+                mem_fragmentation_ratio=0.0,
+                instantaneous_ops_per_sec=0,
+                hit_rate=0.0,
+                used_memory=0,
+                used_memory_rss=0,
+
+                used_memory_peak=0,
+                used_memory_lua=0,
+                expired_keys=0,
+                evicted_keys=0,
+                keyspace_hist=0,
+
+                keyspace_misses=0,
+                total_commands_processed=0,
+                pubsub_channels=0,
+                pubsub_patterns=0,
+                role="",
+
+                connected_slaves=0,
+                rdb_bgsave_in_progress=0,
+                rdb_last_save_status="",
+                rdb_last_bgsave_time_sec=0,
+                aof_enabled=0,
+                confile_file="",
+
+                version="",
+                uptime_in_seconds="",
+                record_time="GETDATE()"
+                )
+
+        def colsnames(self):
+            return self._cols.iterkeys()
+
+        def values(self):
+            return self._cols.itervalues()
+
+        def len(self):
+            return len(self._cols)
+
+        def __init__(self, info):
+            lines = info.splitlines()
+            for l in lines:
+                kv = l.split(":")
+                if len(kv) == 2:
+                    if kv[0] in self._cols: # check columns that we interested in
+                        self._cols[kv[0]] = kv[1]
+                        #print 'good'
+                        #print kv[0],"=", self._cols[kv[0]]
+
     def writeinfo2db(self, info):
-        print "{0}: writeinfo2db ".format(time.time())
+        record = self.__redisinfo_record(info)
+        #print "{0}: writeinfo2db ".format(time.time())
 
         if self.db is None:
             self.try_connect()
-
+        
         if self.db is not None:
             try:
-                #TODO: try using sqlschmay instead of ugly hardcode
-                self.cursor.execute("insert into UserProfile1 values(%d, %s, %s)", (123,"hh", "2014-2-2"))
+                #TODO: try using sqlschmay instead of this ugly hardcode
+                d = dict(user_id=123,name="123",birthdate="2012-1-1")
+                d = dict(@id=123,@name="123")
+                #self.cursor.execute("insert into RedisInfo values(")
+                #self.cursor.execute("""insert into test values(id, name)""", d)
+                #l = dict()[123,"1234"]
+                self.cursor.callproc("inserttest",d)
+                #self.cursor.callproc("GSP_InsertRedisInfo", )
+                
+
                 self.db.commit()
             except pymssql.OperationalError as e:
                 print e

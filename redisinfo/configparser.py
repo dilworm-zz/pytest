@@ -4,10 +4,11 @@ def GetServerList(filename):
   serverlist = []
   lines = open(filename).read().splitlines()
   for l in lines:
-    addr = l.split(' ')
-    if len(addr) == 2:
-      serverlist.append((addr[0], int(addr[1])))
-      #print (addr[0], addr[1])
+    item = l.split(' ')
+    if len(item) != 4:
+        raise RuntimeError("Load redis config failed!")
+    serverlist.append((item[0], int(item[1]),int(item[2]), item[3]))
+    print (item[0], int(item[1]),int(item[2]), item[3]) 
   return serverlist
 
 

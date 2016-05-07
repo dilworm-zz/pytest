@@ -5,7 +5,9 @@ import pymssql
 CONN_TIMEOUT = 10 # timeout reconnect interval in seconds
 
 class ReplyItem:
-    def __init__(self, type, data, time):
+    def __init__(self, redisid, redisname, type, data, time):
+        self.rid = redisid
+        self.rname = redisname
         self.type = type
         self.data = data
         self.time = time
@@ -17,8 +19,8 @@ class RedisReplyService:
     is_start = False
     dbconf = DBConfig()
     last_conn_time = 0
-    db = None
-    
+    db = None 
+    cursor = None
     def __init__(self):
         self.worker = threading.Thread(target = self._run, name = "reply service")
 
@@ -27,7 +29,7 @@ class RedisReplyService:
             try:
                 item = self.queue.get(True)
                 if item.type == "info":
-                    self.handle_info(item.data)
+                    self.handle_info(item.rid,item.rname, item.data)
             except Exception as e:
                 print e
                 print "Error: unknown exception inside RedisReplyHandler.run"
@@ -90,6 +92,13 @@ class RedisReplyService:
 
     # Extra from redis info and map to database table
     class __redisinfo_record:
+        _colnames = ["redis_id", "redisdb_name", "host", "port", "pid",
+                     "connected_clients", "keys", "keys_expires", "used_memory_human", "used_memory_peak_human",
+                     "mem_fragmentation_ratio", "instantaneous_ops_per_sec", "hit_rate", "used_memory", "used_memory_rss",
+                     "used_memory_peak", "used_memory_lua", "expired_keys", "evicted_keys", "keyspace_hist",
+                     "keyspace_misses", "total_commands_processed", "pubsub_channels", "pubsub_patterns", "role",
+                     "connected_slaves", "rdb_bgsave_in_progress", "rdb_last_save_status", "rdb_last_bgsave_time_sec", "aof_enabled",
+                     "confile_file", "version", "uptime_in_seconds",]
         _cols = dict(
                 redis_id=1,
                 redisdb_name="",
@@ -126,11 +135,10 @@ class RedisReplyService:
                 rdb_last_save_status="",
                 rdb_last_bgsave_time_sec=0,
                 aof_enabled=0,
-                confile_file="",
 
+                confile_file="",
                 version="",
                 uptime_in_seconds="",
-                record_time="GETDATE()"
                 )
 
         def colsnames(self):
@@ -142,18 +150,20 @@ class RedisReplyService:
         def len(self):
             return len(self._cols)
 
-        def __init__(self, info):
+        def __init__(self, rid, rname, info):
             lines = info.splitlines()
+            self._cols["redis_id"] = rid
+            self._cols["redisdb_name"] = rname
             for l in lines:
                 kv = l.split(":")
                 if len(kv) == 2:
                     if kv[0] in self._cols: # check columns that we interested in
                         self._cols[kv[0]] = kv[1]
                         #print 'good'
-                        #print kv[0],"=", self._cols[kv[0]]
+                        #print k[0],"=", self._cols[kv[0]]
 
-    def writeinfo2db(self, info):
-        record = self.__redisinfo_record(info)
+    def writeinfo2db(self, rid, rname, info):
+        record = self.__redisinfo_record(rid, rname, info)
         #print "{0}: writeinfo2db ".format(time.time())
 
         if self.db is None:
@@ -163,12 +173,15 @@ class RedisReplyService:
             try:
                 #TODO: try using sqlschmay instead of this ugly hardcode
                 d = dict(user_id=123,name="123",birthdate="2012-1-1")
-                d = dict(@id=123,@name="123")
                 #self.cursor.execute("insert into RedisInfo values(")
                 #self.cursor.execute("""insert into test values(id, name)""", d)
                 #l = dict()[123,"1234"]
-                self.cursor.callproc("inserttest",d)
-                #self.cursor.callproc("GSP_InsertRedisInfo", )
+                #self.cursor.callproc("inserttest",d)
+                p =[record._cols[x] for x in record._colnames]
+                #for n in record._colnames: p.append(record._cols[n])
+
+                print p
+                self.cursor.callproc("GSP_InsertRedisInfo", p)
                 
 
                 self.db.commit()
@@ -179,10 +192,12 @@ class RedisReplyService:
                     self.db = None
                 if self.cursor is not None:
                     self.cursor = None
+            except pymssql.Error as e:
+                print e
 
-    def handle_info(self, info):
+    def handle_info(self, rid, rname, info):
         try:
-            self.writeinfo2db(info)
+            self.writeinfo2db(rid, rname, info)
         except IOError as e:
             print e
 

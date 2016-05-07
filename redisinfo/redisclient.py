@@ -16,10 +16,12 @@ class RedisClient(asyncore.dispatcher):
     buf = ""
     last_try_conn = 0
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, id, name):
         asyncore.dispatcher.__init__(self)
         self.host = host
         self.port = port
+        self.id = id
+        self.name = name
         #self.set_reuse_addr()
 
     def add_cmd(self):
@@ -66,7 +68,7 @@ class RedisClient(asyncore.dispatcher):
         if rp.check_bulk_strings(self.redis_reply):
             try:
                 print "{0}: redis_reply from {1}:{2}".format(time.time(), self.host, self.port)
-                self.cb.on_info(rp.remove_bulk_string_format(self.redis_reply))
+                self.cb.on_info(self.id, self.name, rp.remove_bulk_string_format(self.redis_reply))
             except Exception as e:
                 print e
             finally:
@@ -85,11 +87,12 @@ class RedisClient(asyncore.dispatcher):
         return self.rflag
     
     def empty_queue(self):
+        print "{0}: RedisClient::empty_queue".format(time.time())
         while not self.queue.empty():
             self.queue.get_nowait()
 
     def writable(self):
-        self.try_connect()
+        self.try_connect() #treat as poll timeout event.
 
         if self.is_connecting():
             print "1 true"

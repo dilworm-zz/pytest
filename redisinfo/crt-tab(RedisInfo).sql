@@ -1,7 +1,7 @@
 USE [UserInfo]
 GO
 
-/****** Object:  Table [dbo].[RedisInfo]    Script Date: 05/06/2016 01:49:41 ******/
+/****** Object:  Table [dbo].[RedisInfo]    Script Date: 05/08/2016 00:46:04 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -11,14 +11,14 @@ GO
 CREATE TABLE [dbo].[RedisInfo](
 	[redis_id] [smallint] NOT NULL,
 	[redisdb_name] [nvarchar](32) NULL,
-	[host] [nvarchar](50) NOT NULL,
-	[port] [smallint] NOT NULL,
+	[host] [nvarchar](50) NULL,
+	[port] [smallint] NULL,
 	[pid] [nchar](10) NOT NULL,
 	[connected_clients] [smallint] NOT NULL,
 	[keys] [bigint] NOT NULL,
 	[keys_expires] [bigint] NOT NULL,
 	[used_memory_human] [nvarchar](32) NOT NULL,
-	[used_memory_peak_human] [decimal](12, 2) NOT NULL,
+	[used_memory_peak_human] [nvarchar](32) NOT NULL,
 	[mem_fragmentation_ratio] [decimal](8, 2) NOT NULL,
 	[instantaneous_ops_per_sec] [int] NOT NULL,
 	[hit_rate] [decimal](3, 2) NOT NULL,
@@ -36,16 +36,18 @@ CREATE TABLE [dbo].[RedisInfo](
 	[role] [nchar](10) NOT NULL,
 	[connected_slaves] [tinyint] NOT NULL,
 	[rdb_bgsave_in_progress] [tinyint] NOT NULL,
-	[rdb_last_save_time] [datetime] NULL,
-	[rdb_last_bgsave_status] [nchar](10) NOT NULL,
+	[rdb_last_bgsave_status] [nchar](10) NULL,
 	[rdb_last_bgsave_time_sec] [int] NOT NULL,
 	[aof_enabled] [tinyint] NOT NULL,
 	[config_file] [nvarchar](300) NULL,
-	[version] [nchar](10) NOT NULL,
+	[version] [nchar](10) NULL,
 	[uptime_in_seconds] [bigint] NOT NULL,
 	[record_time] [datetime] NOT NULL
 ) ON [PRIMARY]
 
+GO
+
+ALTER TABLE [dbo].[RedisInfo] ADD  CONSTRAINT [DF_RedisInfo_rdb_last_bgsave_status]  DEFAULT (' ') FOR [rdb_last_bgsave_status]
 GO
 
 

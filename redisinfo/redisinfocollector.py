@@ -5,7 +5,7 @@ import configparser as cf
 from redisreplycallback import RedisReplyCallback
 import redisreplyhandler as rrh
 
-exec_interval = 5
+exec_interval = 60 # send command "info" to redis
 
 def timer_check_connection(collector):
     for p in collector.peers:
@@ -45,14 +45,14 @@ class ReidsInfoCollector(RedisReplyCallback):
 
         # If you want to handle "global" poll timeout event of asyncore.loop, create a empty 
         # asyncore.dispatcher object with readable() return False ,then call 
-        # create_socket, which will add the object to poll list, now we can
+        # create_socket, which will add the object to poll list, causing unproper disconnect event, now we can
         # handle the "global" poll timeout event inside the object's writeable() function.
 
-        for addr in self.svraddrlist:
-            c = rc.RedisClient(addr[0], addr[1])
+        for item in self.svraddrlist:
+            c = rc.RedisClient(item[0], item[1], item[2], item[3])
             c.set_callback(self)
-            c.asyn_info()
-            c.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+            c.asyn_info() 
+            c.create_socket(socket.AF_INET, socket.SOCK_STREAM) 
             self.peers.append(c)
 
         asyncore.loop(0.1)
@@ -65,9 +65,9 @@ class ReidsInfoCollector(RedisReplyCallback):
         self.worker.start()
 
     # implement RedisReplyCallback
-    def on_info(self, data):
+    def on_info(self, redisid, redisname, data):
         #print "{0}: on_info".format(time.time())
-        item = rrh.ReplyItem("info", data, time.time())
+        item = rrh.ReplyItem(redisid, redisname, "info", data, time.time())
         self.reply_service.add_reply(item)
 
 

@@ -5,7 +5,7 @@ import redisreplyhandler as rrh
 
 serverlist = cf.GetServerList('./serverlist.txt')
 #serverlist = cf.GetServerList('./redisinfo/serverlist.txt')
-print "Loading server list:"
+print "{0}:Loading server list:".format(time.time())
 for addr in serverlist:
     print addr[0], addr[1]
     

@@ -2,7 +2,7 @@
 import Queue,threading,time, ConfigParser
 import pymssql
 
-CONN_TIMEOUT = 10 # timeout reconnect interval in seconds
+CONN_TIMEOUT = 10 # timeout reconnect interval, in seconds
 
 class ReplyItem:
     def __init__(self, redisid, redisname, type, data, time):
@@ -136,7 +136,7 @@ class RedisReplyService:
                 rdb_last_bgsave_time_sec=0,
                 aof_enabled=0,
 
-                confile_file="",
+                #confile_file="",
                 version="",
                 uptime_in_seconds="",
                 )

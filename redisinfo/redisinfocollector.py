@@ -39,7 +39,7 @@ class ReidsInfoCollector(RedisReplyCallback):
         self.reply_service = rs
 
     def _run(self):
-        print "_run"
+        print "ReidsInfoCollector::_run"
         #threading.Timer(conn_timeout, timer_check_connection, args = [self]).start()
         threading.Timer(exec_interval, timer_add_cmd, args = [self]).start()
 
@@ -64,7 +64,7 @@ class ReidsInfoCollector(RedisReplyCallback):
         self.is_start = True
         self.worker.start()
 
-    # implement RedisReplyCallback
+    # RedisReplyCallback implement 
     def on_info(self, redisid, redisname, data):
         #print "{0}: on_info".format(time.time())
         item = rrh.ReplyItem(redisid, redisname, "info", data, time.time())

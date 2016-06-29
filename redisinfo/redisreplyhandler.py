@@ -80,10 +80,7 @@ class RedisReplyService:
             return True
 
         self.load_dbconfig("./config/dbconfig.ini")
-
-        #self.db = pymssql.connect(cf.server, cf.user, cf.pwd, cf.database)
         self.try_connect()
-
         self.is_start = True
         self.worker.start()
 
@@ -136,7 +133,7 @@ class RedisReplyService:
                 rdb_last_bgsave_time_sec=0,
                 aof_enabled=0,
 
-                #confile_file="",
+                confile_file="",
                 version="",
                 uptime_in_seconds="",
                 )
@@ -172,7 +169,6 @@ class RedisReplyService:
         if self.db is not None:
             try:
                 #TODO: try using sqlschmay instead of this ugly hardcode
-                d = dict(user_id=123,name="123",birthdate="2012-1-1")
                 #self.cursor.execute("insert into RedisInfo values(")
                 #self.cursor.execute("""insert into test values(id, name)""", d)
                 #l = dict()[123,"1234"]

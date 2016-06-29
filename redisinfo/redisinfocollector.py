@@ -5,7 +5,7 @@ import configparser as cf
 from redisreplycallback import RedisReplyCallback
 import redisreplyhandler as rrh
 
-exec_interval = 60 # send command "info" to redis
+exec_interval = 3 # send command "info" to redis
 
 def timer_check_connection(collector):
     for p in collector.peers:
@@ -69,6 +69,7 @@ class ReidsInfoCollector(RedisReplyCallback):
         #print "{0}: on_info".format(time.time())
         item = rrh.ReplyItem(redisid, redisname, "info", data, time.time())
         self.reply_service.add_reply(item)
+        
 
 
 

@@ -3,7 +3,9 @@ import asyncore, socket, time
 import redisproto as rp
 import threading
 import traceback
-import Queue
+import Queue,logging
+
+logger = logging.getLogger("cf")
 
 CONN_TIMEOUT = 15
 
@@ -11,7 +13,7 @@ class RedisClient(asyncore.dispatcher):
     redis_reply = ''# redis reply, bulk strings
     recv_size = 0
     wflag = False
-    rflag = False # prevent pushed to poll readable before invoke connect() 
+    rflag = False # prevent being pushed into poll readable list before invoke connect() 
     queue = Queue.Queue()
     buf = ""
     last_try_conn = 0
@@ -27,8 +29,9 @@ class RedisClient(asyncore.dispatcher):
     def add_cmd(self):
         try:
             self.queue.put_nowait(time.time()) #simply put an item to notify redisclient 
+            #print "add to queue {}".format(self.port)
         except Queue.Full:
-            print u"Error: add_cmd failed, queue is full."
+            print u"Error: add_cmd failed, queue is FULL !!!"
 
     def set_callback(self, cb):
         self.cb = cb
@@ -61,18 +64,24 @@ class RedisClient(asyncore.dispatcher):
         print u"{0}: connected to {1}:{2}".format(time.time(), self.host, self.port)
 
     def handle_read(self):
-        #print 'handle_read...'
-        recv = self.recv(1024)
+        #print 'handle_read...{0}'.format(self.port)
+        recv = self.recv(256) 
         self.recv_size += len(recv)
         self.redis_reply += recv
-        if rp.check_bulk_strings(self.redis_reply):
+        last = rp.check_bulk_strings(self.redis_reply)
+        if (last != -1):
             try:
-                print "{0}: redis_reply from {1}:{2}".format(time.time(), self.host, self.port)
-                self.cb.on_info(self.id, self.name, rp.remove_bulk_string_format(self.redis_reply))
+                logger.debug("{0}: redis reply from {1}:{2} , data_size = {3}".format(time.time(), self.host, self.port, len(self.redis_reply)))
+                self.cb.on_info(self.id, self.name, rp.remove_bulk_string_format(self.redis_reply[:last]))
+                self.redis_reply = self.redis_reply[last:]
+                if (len(self.redis_reply) > 0):
+                    logger.warn("{0} remain {1}".format(self.port, len(self.redis_reply)))
             except Exception as e:
                 print e
-            finally:
-                self.redis_reply = ""
+                logger.error(e)
+
+        #else:
+        #    print "{0} check bulk_strings failed! recv_size = {1}, data_size = {2}".format(self.port, len(recv), len(self.redis_reply))
 
     def handle_write(self):
         #print 'handle_write...'
@@ -91,23 +100,24 @@ class RedisClient(asyncore.dispatcher):
         while not self.queue.empty():
             self.queue.get_nowait()
 
+    # This function also treat as poll timeout event.
     def writable(self):
-        self.try_connect() #treat as poll timeout event.
+        self.try_connect() 
 
         if self.is_connecting():
-            print "1 true"
+            print "{0}:rediclient is connecting to:{1}:{2}".format(time.time(), self.host, self.port)
             return True
         if self.is_connected():
             if len(self.buf) == 0:
                 try:
                     t = self.queue.get_nowait()
                     self.buf = self.cmd
-                    #print "2 true"
+                    #print "self.buf = self.cmd {}".format(self.port)
                     return True
                 except Queue.Empty:
                     return False
             elif len(self.buf) > 0:
-                print "3 true"
+                print "{0}:need to send remaining request data".format(time.time())
                 return True
         else:
             return False

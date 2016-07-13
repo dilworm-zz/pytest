@@ -5,7 +5,7 @@ import configparser as cf
 from redisreplycallback import RedisReplyCallback
 import redisreplyhandler as rrh
 
-exec_interval = 3 # send command "info" to redis
+exec_interval = 1 # send command "info" to redis
 
 def timer_check_connection(collector):
     for p in collector.peers:
@@ -17,7 +17,7 @@ def timer_check_connection(collector):
 def timer_add_cmd(collector):
     for p in collector.peers:
         if p.is_connected():
-            print "{0}: add_cmd {1}:{2}".format(time.time(), p.host, p.port)
+            print "{0}: add 'info' cmd to queue {1}:{2}".format(time.time(), p.host, p.port)
             p.add_cmd()
     threading.Timer(exec_interval, timer_add_cmd, args=[collector]).start()
 
@@ -69,7 +69,6 @@ class ReidsInfoCollector(RedisReplyCallback):
         #print "{0}: on_info".format(time.time())
         item = rrh.ReplyItem(redisid, redisname, "info", data, time.time())
         self.reply_service.add_reply(item)
-        
 
 
 

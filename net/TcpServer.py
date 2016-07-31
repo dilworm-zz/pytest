@@ -6,6 +6,7 @@ class MyTcpHandler(SocketServer.BaseRequestHandler):
         self.data = self.request.recv(1024).strip()
         print "*"*20
         print self.data
+        print self.request
         self.request.send("world")
 
 

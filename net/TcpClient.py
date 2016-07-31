@@ -6,7 +6,7 @@ import threading
 import Queue
 import logging
 
-logger = logging.getLogger("cf")
+#logger = logging.getLogger("cf")
 
 CONN_TIMEOUT = 15
 
@@ -46,7 +46,8 @@ class TcpClient(asyncore.dispatcher):
         return self._writeable
 
     def handle_connect(self):
-        logger.debug(u"{0}: connected to {1}:{2}".format(time.time(), self.host, self.port))
+        #logger.debug(u"{0}: connected to {1}:{2}".format(time.time(), self.host, self.port))
+        print "connected"
 
     def handle_write(self):
         self.send("hello")
@@ -56,6 +57,12 @@ class TcpClient(asyncore.dispatcher):
     def handle_read(self):
         print(self.recv(1024))
 
+    def handle_error(self):
+        print "error"
+
+    def handle_close(self):
+        print "{} close".format(time.time())
+        self.close()
 
 if __name__ == "__main__":
     client = TcpClient(("127.0.0.1", 9999))

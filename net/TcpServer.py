@@ -1,15 +1,36 @@
 #-*-coding=utf-8-*-
-import SocketServer
+import asyncore
+import socket
+import time
+import threading
+import Queue
+import logging
+from TcpConnection import TcpConnection
 
-class MyTcpHandler(SocketServer.BaseRequestHandler):
-    def handle(self):
-        self.data = self.request.recv(1024).strip()
-        print "*"*20
-        print self.data
-        print self.request
-        self.request.send("world")
+       # except:
+       #     logger.error(u"accept 出现未知异常") 
+
+logger = logging.getLogger("cf")
+
+class TcpServer(asyncore.dispatcher):
+
+    def __init__(self, (host, port)):
+        logger.debug("TcpServer.__init__")
+        asyncore.dispatcher.__init__(self)
+        self.host = host
+        self.port = port
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.set_reuse_addr()
+        self.bind((host, port))
+        self.listen(10)
 
 
-HOST, PORT = "localhost", 9999
-server = SocketServer.TCPServer((HOST,PORT), MyTcpHandler)
-server.serve_forever()
+    def handle_accept(self):
+        pair = self.accept()
+        if pair is None:
+            logger.warn(u"accept 出现异常")
+        else: 
+            logger.debug(u"{} 请求连接成功".format(pair[1]))
+            TcpConnection(pair[0])
+
+

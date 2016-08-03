@@ -11,7 +11,7 @@ logger = logging.getLogger("cf")
 
 class TcpConnection(asyncore.dispatcher):
 
-    def __init__(self, sock):
+    def __init__(self, sock, tcpserver):
         asyncore.dispatcher.__init__(self, sock)
 
         self.outbufferqueue = Queue.Queue()
@@ -19,6 +19,7 @@ class TcpConnection(asyncore.dispatcher):
         self.outbuffer = ""
         self._readable = True
         self._writeable = True
+        self.tcpserver = tcpserver
 
     def set_readable(self, r):
         self._readable = r

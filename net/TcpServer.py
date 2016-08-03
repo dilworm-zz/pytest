@@ -23,6 +23,7 @@ class TcpServer(asyncore.dispatcher):
         self.set_reuse_addr()
         self.bind((host, port))
         self.listen(10)
+        self.clients = []
 
 
     def handle_accept(self):
@@ -31,6 +32,10 @@ class TcpServer(asyncore.dispatcher):
             logger.warn(u"accept 出现异常")
         else: 
             logger.debug(u"{} 请求连接成功".format(pair[1]))
-            TcpConnection(pair[0])
+            self.clients[pair[0].fileno()] = TcpConnection(pair[0], self)
+
+    def remove_client(self, fileno):
+        self.clients[]
+
 
 

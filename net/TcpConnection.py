@@ -38,8 +38,9 @@ class TcpConnection(asyncore.dispatcher):
             data = self.recv(1024)
             print(data)
             self.send(data.upper())
-        except:
+        except Exception as e :
             logger.error(u"接收数据发生异常,将主动断开{}连接".format(self.addr))
+            print e
             self.close()
     
     def handle_write(self):
@@ -47,5 +48,6 @@ class TcpConnection(asyncore.dispatcher):
 
     def handle_close(self):
         logger.info(u"{}:{} 断开连接".format(self.addr[0], self.addr[1]))
+        self.tcpserver.remove_client(self.socket)
         self.close()
    

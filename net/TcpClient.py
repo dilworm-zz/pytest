@@ -6,6 +6,8 @@ import threading
 import Queue
 import logging
 import traceback
+import packetparser as pp
+
 
 logger = logging.getLogger("cf")
 
@@ -28,7 +30,7 @@ class TcpClient(asyncore.dispatcher):
         
         self.outbufferqueue = Queue.Queue()
         self.inbufferqueue = Queue.Queue()
-        self.outbuffer = ""
+        self.outbuffer = "" # data that need to be send at the moment.
 
         self._readable = False
         self._writeable = False
@@ -39,8 +41,17 @@ class TcpClient(asyncore.dispatcher):
 
     def start(self):
         self.connect()
-        #while (not self.stopping):
         asyncore.loop(1)
+
+
+    def add2Queue(self, data):
+        try:
+            self.outbufferqueue.put((data, time.time()))
+            self.set_writeable(True)
+            return True
+        except Queue.Full:
+            logger.error("add2Qeueu Failed!")
+            return False
 
     def try_connect(self):
         print "try_connect connecting = ", self.connecting, "connected = ", self.connected
@@ -49,7 +60,6 @@ class TcpClient(asyncore.dispatcher):
             (time.time() - self.lastconntime > CONNECT_INTERVAL)):
             self.connect()
             
-
     def connect(self):
         assert(not self.connecting)
         assert(not self.connected)
@@ -80,16 +90,34 @@ class TcpClient(asyncore.dispatcher):
         return self._readable
 
     def writable(self):
+        # FIXME: Generally, should check outbuffer and outbufferqueue to decide 
+        # a writeable state, because set_writeable is not thread safety.
         return self._writeable
 
     def handle_connect(self):
         traceback.print_stack()
         logger.debug(u"{0}:{1} 连接成功.".format(self.host, self.port))
         self.set_readable(True)
+        self.add2Queue("hello")
 
     def handle_write(self):
-        self.send("hello")
-        self.set_writeable(False)
+        if len(self.outbuffer) > 0:
+            s = self.send(self.outbuffer)
+            if s > 0:
+                self.outbuffer = self.outbuffer[s:]
+        elif not self.outbufferqueue.empty():
+            try:
+                item = self.outbufferqueue.get(True, 0.01)
+                self.outbuffer = item[0]
+                s = self.send(self.outbuffer)
+                if s > 0:
+                    self.outbuffer = self.outbuffer[s:]
+            except Queue.Empty:
+                pass
+        else:
+            # no more data to sent
+            self.set_writeable(False)
+
 
     def handle_read(self):
         print(self.recv(1024))

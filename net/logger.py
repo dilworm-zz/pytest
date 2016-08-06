@@ -1,15 +1,15 @@
 #-*-coding=utf-8 -*-
 import logging
 
-def initlogger():
+def initlogger(logfile = "testlog"):
     FORMAT = "%(asctime)s [%(levelname)-.7s] %(message)s"
     logFormatter = logging.Formatter(FORMAT)
     g_cflogger = logging.getLogger("cf")
     g_cflogger.setLevel(logging.DEBUG)
 
-    fileHandle = logging.FileHandler("{0}.log".format("testlog"))
+    fileHandle = logging.FileHandler("{0}.log".format(logfile))
     fileHandle.setFormatter(logFormatter)
-    fileHandle.setLevel(logging.WARN)
+    fileHandle.setLevel(logging.INFO)
     g_cflogger.addHandler(fileHandle)
 
     consoleHandle = logging.StreamHandler()

@@ -7,9 +7,6 @@ import Queue
 import logging
 from TcpConnection import TcpConnection 
 
-       # except:
-       #     logger.error(u"accept 出现未知异常") 
-
 logger = logging.getLogger("cf")
 
 class TcpServer(asyncore.dispatcher):

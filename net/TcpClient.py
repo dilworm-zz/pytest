@@ -1,17 +1,16 @@
 #-*-coding=utf-8-*-
 import asyncore
 import socket
-import time
-import threading
-import Queue
+import time 
+import threading 
+import Queue 
 import logging
 import traceback
 import packetparser as pp
 
-
 logger = logging.getLogger("cf")
 
-CONNECT_INTERVAL = 5 # seconds
+CONNECT_INTERVAL = 5 # reconnect timeout. seconds
 
 def timer_check_connection(conn):
     if not (conn.is_connected() or conn.is_connecting()):
@@ -23,38 +22,49 @@ def make_nonblocking_socket():
     return s
 
 class TcpClient(asyncore.dispatcher):
-    def __init__(self, (host, port)):
+    def __init__(self, (host, port), commanddispatcher):
         asyncore.dispatcher.__init__(self) 
         self.host = host
         self.port = port
+        self.cmddispatcher = commanddispatcher
         
         self.outbufferqueue = Queue.Queue()
-        self.inbufferqueue = Queue.Queue()
         self.outbuffer = "" # data that need to be send at the moment.
+        self.inbuffer = "" 
 
         self._readable = False
         self._writeable = False
         self.connecting = False
         self.connected = False
 
-        self.stopping = False
+        self.started = False
+
+    def _clear(self):
+        self.outbufferqueue = Queue.Queue()
+        self.inbufferQueue = Queue.Queue()
+        self.outbuffer = ""
+        self.inbuffer = ""
 
     def start(self):
+        self.started = True
         self.connect()
         asyncore.loop(1)
 
-
-    def add2Queue(self, data):
+    def send(self, data):
+        assert(self.started)
         try:
-            self.outbufferqueue.put((data, time.time()))
+            print "-"*200
+            traceback.print_stack()
+            packed = pp.pack(data)
+            self.outbufferqueue.put((packed, time.time()))
             self.set_writeable(True)
             return True
         except Queue.Full:
-            logger.error("add2Qeueu Failed!")
+            logger.error("add data to qeueu FAILED!")
             return False
 
     def try_connect(self):
-        print "try_connect connecting = ", self.connecting, "connected = ", self.connected
+        #print "try_connect connecting = ", self.connecting, "connected = ", self.connected
         if (not self.connecting and 
             not self.connected and 
             (time.time() - self.lastconntime > CONNECT_INTERVAL)):
@@ -90,15 +100,16 @@ class TcpClient(asyncore.dispatcher):
         return self._readable
 
     def writable(self):
-        # FIXME: Generally, should check outbuffer and outbufferqueue to decide 
+        # FIXME: Generally, checking outbuffer and outbufferqueue to determine
         # a writeable state, because set_writeable is not thread safety.
         return self._writeable
 
     def handle_connect(self):
-        traceback.print_stack()
+        #traceback.print_stack()
         logger.debug(u"{0}:{1} 连接成功.".format(self.host, self.port))
         self.set_readable(True)
-        self.add2Queue("hello")
+        if hasattr(self.cmddispatcher, "handle_connect"):
+            cmddispatcher.handle_connect()
 
     def handle_write(self):
         if len(self.outbuffer) > 0:
@@ -109,7 +120,7 @@ class TcpClient(asyncore.dispatcher):
             try:
                 item = self.outbufferqueue.get(True, 0.01)
                 self.outbuffer = item[0]
-                s = self.send(self.outbuffer)
+                s = asyncore.dispatcher.send(self, self.outbuffer)
                 if s > 0:
                     self.outbuffer = self.outbuffer[s:]
             except Queue.Empty:
@@ -120,24 +131,15 @@ class TcpClient(asyncore.dispatcher):
 
 
     def handle_read(self):
-        print(self.recv(1024))
+        s = self.recv(4096)
+        if len(s) > 0:
+            self.inbuffer = self.inbuffer + s
+            data = pp.unpack(self.inbuffer)
+            if data is not None:
+                print "cmddis"
+                self.cmddispatcher.onReceviceCmd(data)
 
-   # def handle_error(self):
-   #     self.set_readable(false)
-   #     self.set_writeable(false)
-   #     if (self.connecting):
-   #         logger.warn(u"连接{}:{}失败!".format(self.host, self.port))
-   #         asyncore.dispatcher.close(self)
-   #         sock = make_nonblocking_socket()
-   #         self.set_socket(sock)
-   #         print "h e map len", len(self._map)
-   #         self.connecting = False
-   #     elif self.connected:
-   #         logger.warn(u"{}:{} 异常断开".format(self.host, self.port))
-   #         self.connected = False
-   #     
-        #traceback.print_stack()
-
+        
     def handle_close(self):
         if self.connecting:
             logger.warn(u"连接{}:{} 失败!".format(self.host, self.port))
@@ -147,21 +149,13 @@ class TcpClient(asyncore.dispatcher):
             self.connected = False
         self.set_readable(False)
         self.set_writeable(False)
-        #print "handle close self.socket ", self.socket
-
-        # insert new socket into map, make sure the loop won't break out 
-        # when map is empty.
-        #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #sock.setblocking(0)
-        #self.set_socket(sock)
+        self._clear()
         
-        traceback.print_stack()
+        #traceback.print_stack()
 
 
 if __name__ == "__main__":
-    from logger import initlogger 
-    initlogger("client")
-    client = TcpClient(("127.0.0.1", 9999))
-    client.start()
-    print "end"
-
+    from logger import initlogger
+    initlogger("./log/tcplclient")
+    c = TcpClient(("127.0.0.1", 9999))
+    c.start()

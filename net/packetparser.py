@@ -1,4 +1,5 @@
 #-*-coding=utf-8-*-
+import string
 
 HEAD_SIZE = 5 # 前五个字节指名后面的数据包大小 
 HEAD_PAD = '&'# 用于填充前5个字节中的“字位置”

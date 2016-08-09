@@ -9,7 +9,7 @@ from cmddispatch import *
 def network_thread_handler(svrSocket):
     svrSocket.start()
 
-def cmd_thread_handler(dispatcher, svrSocket):
+def logic_thread_handler(dispatcher, svrSocket):
     dispatcher.run(svrSocket)
 
 class Agent:
@@ -21,7 +21,7 @@ class Agent:
         tcpclientThread = threading.Thread(target=network_thread_handler, 
                 name="Network", args=[self.peer])
 
-        cmdDispatchThread = threading.Thread(target=cmd_thread_handler, 
+        cmdDispatchThread = threading.Thread(target=logic_thread_handler, 
                 name="CmdDispatch", args=[self.dispatcher, self.peer])
 
         tcpclientThread.start()

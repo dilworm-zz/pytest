@@ -17,9 +17,9 @@ def timer_check_connection(conn):
         conn.connect()
 
 def make_nonblocking_socket():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setblocking(0)
-    return s
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+    s.setblocking(0) 
+    return s 
 
 class TcpClient(asyncore.dispatcher):
     def __init__(self, (host, port), commanddispatcher):
@@ -53,8 +53,8 @@ class TcpClient(asyncore.dispatcher):
     def send(self, data):
         assert(self.started)
         try:
-            print "-"*200
-            traceback.print_stack()
+            #print "-"*200
+            #traceback.print_stack()
             packed = pp.pack(data)
             self.outbufferqueue.put((packed, time.time()))
             self.set_writeable(True)
@@ -116,8 +116,10 @@ class TcpClient(asyncore.dispatcher):
             s = self.send(self.outbuffer)
             if s > 0:
                 self.outbuffer = self.outbuffer[s:]
+                print 1
         elif not self.outbufferqueue.empty():
             try:
+                print 2
                 item = self.outbufferqueue.get(True, 0.01)
                 self.outbuffer = item[0]
                 s = asyncore.dispatcher.send(self, self.outbuffer)
@@ -127,25 +129,29 @@ class TcpClient(asyncore.dispatcher):
                 pass
         else:
             # no more data to sent
+            print 3
             self.set_writeable(False)
 
 
     def handle_read(self):
-        s = self.recv(4096)
-        if len(s) > 0:
-            self.inbuffer = self.inbuffer + s
-            data = pp.unpack(self.inbuffer)
-            if data is not None:
-                print "cmddis"
-                self.cmddispatcher.onReceviceCmd(data)
+        try:
+            s = self.recv(4096)
+            if len(s) > 0:
+                print s
+                self.inbuffer = self.inbuffer + s
+                data = pp.unpack(self.inbuffer)
+                if data is not None:
+                    self.cmddispatcher.onReceiveData(data)
+        except Exception as e:
+            print e
+            logger.error(u"接收数据出现异常，将主动断开连接 {}:{} ".format(
+                self.host, self.port))
 
         
-    def handle_close(self):
+    def handle_close(self): 
         if self.connecting:
             logger.warn(u"连接{}:{} 失败!".format(self.host, self.port))
-            self.connecting = False
-        elif self.connected:
-            logger.info(u"{} 连接断开".format(self.host))
+            self.connecting = False elif self.connected: logger.info(u"{} 连接断开".format(self.host))
             self.connected = False
         self.set_readable(False)
         self.set_writeable(False)

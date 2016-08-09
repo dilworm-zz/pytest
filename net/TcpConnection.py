@@ -6,6 +6,7 @@ import time
 import threading
 import Queue
 import logging
+import packetparser as pp
 
 logger = logging.getLogger("cf")
 
@@ -16,10 +17,20 @@ class TcpConnection(asyncore.dispatcher):
 
         self.outbufferqueue = Queue.Queue()
         self.inbufferqueue = Queue.Queue()
+        self.inbuffer = ""
         self.outbuffer = ""
         self._readable = True
         self._writeable = True
-        self.tcpserver = tcpserver
+
+        self.tcpserver = tcpserver # point to the server
+
+    def set_callback(self, connect_cb = None, message_cb = None, close_cb = None):
+
+    def _clear(self):
+        self.outbufferqueue = Queue.Queue()
+        self.inbufferqueue = Queue.Queue()
+        self.inbuffer = ""
+        self.outbuffer = ""
 
     def set_readable(self, r):
         self._readable = r
@@ -35,19 +46,24 @@ class TcpConnection(asyncore.dispatcher):
 
     def handle_read(self):
         try:
-            data = self.recv(1024)
-            print(data)
-            self.send(data.upper())
+            s = self.recv(4096)
+            if len(s) > 0:
+                self.inbuffer = self.inbuffer + s
+                print self.inbuffer
+                data = pp.unpack(self.inbuffer)
+                if data is not None:
+                    self.send(pp.pack(data.upper()))
         except Exception as e :
             logger.error(u"接收数据发生异常,将主动断开{}连接".format(self.addr))
             print e
             self.close()
+            self._clear()
     
     def handle_write(self):
         pass
 
     def handle_close(self):
         logger.info(u"{}:{} 断开连接".format(self.addr[0], self.addr[1]))
-        self.tcpserver.remove_client(self.socket)
+        self.close_callback(self.socket)
         self.close()
    

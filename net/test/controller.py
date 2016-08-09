@@ -29,8 +29,11 @@ class Controller(Cmd):
     def preloop(self):
         print(u"Welcome to easydeploy!")
     
+    def postloop(self):
+        print(u"Bye!")
+
     def do_ed(self, line):
-        print "do_end"
+        print "do_ed"
         self.peer.send(line)
         print line
 

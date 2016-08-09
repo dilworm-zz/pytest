@@ -39,7 +39,7 @@ class BaseCommandDispatcher:
         self.running = False
 
     # Network thread will call this method.
-    def OnReceiveCmd(self, data=None):
+    def OnReceiveData(self, data=None):
         logger.debug("OnReceiveCmd")
         try:
             self.queue.put_nowait((data, time.time()))
@@ -47,25 +47,25 @@ class BaseCommandDispatcher:
             logger.error(u"Queue is Full")
             pass
 
-    def do_ping(self, data=None):
-        logger.debug("do_ping")
+    def _do_ping(self, data=None):
+        logger.debug("_do_ping")
         self.peer.send("pong")
 
-    def do_download(self, data=None):
-        logger.debug("do_download")
+    def _do_download(self, data=None):
+        logger.debug("_do_download")
         pass
 
-    def do_update(self, data=None):
+    def _do_update(self, data=None):
         logger.debug(u"receive update command.")
 
-    def do_print(self, data=None):
+    def _do_print(self, data=None):
         if data is not None:
             print data
 
 
 #命令处理映射，在这里添加新的命令映射
-cmd_map = { "ping"      : BaseCommandDispatcher.do_ping,
-            "download"  : BaseCommandDispatcher.do_download,
-            "update"    : BaseCommandDispatcher.do_update,
-            "print"     : BaseCommandDispatcher.do_print,
+cmd_map = { "ping"      : BaseCommandDispatcher._do_ping,
+            "download"  : BaseCommandDispatcher._do_download,
+            "update"    : BaseCommandDispatcher._do_update,
+            "print"     : BaseCommandDispatcher._do_print,
           }

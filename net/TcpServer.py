@@ -30,9 +30,15 @@ class TcpServer(asyncore.dispatcher):
         else: 
             sock, addr = pair
             logger.debug(u"{} 请求连接成功".format(addr))
-            self.clients[sock] = TcpConnection(sock, self)
+            self.new_connection(sock, addr)
 
-    def remove_client(self, sock):
+
+    def new_connection(self, sock, addr):
+        conn = TcpConnection(sock, self)
+        self.clients[sock] = conn
+        conn.handle_connect()
+
+    def remove_connection(self, sock):
         del self.clients[sock]
 
 

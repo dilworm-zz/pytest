@@ -3,15 +3,38 @@ import logging
 import Queue
 import time
 import threading
+import json
 
 logger = logging.getLogger("cf")
 
+# Generally, you should driverd from BaseCommandHandler and impletement 
+# self-define cmd hanndler method
+class BaseCommandHandler:
+    def __init__(self, owner):
+        self.owner = owner
+        self.send = self.owner
+
+    def _do_ping(self, data=None):
+        logger.debug("_do_ping")
+        self.owner.send("pong")
+
+    def _do_download(self, data=None):
+        logger.debug("_do_download")
+        pass
+
+    def _do_update(self, data=None):
+        logger.debug(u"receive update command.")
+
+    def _do_print(self, data=None):
+        if data is not None:
+            print data
+
 class BaseCommandDispatcher:
-    def __init__(self, map=None):
-        if map is None:
-            self._cmd_map = cmd_map
+    def __init__(self, HandlerClass):
+        if HandlerClass is not None:
+            self.handler = HandlerClass(self)
         else:
-            self._cmd_map = map
+            self.handler = BaseCommandHandler(self)
 
         self.peer = None
         self.queue = Queue.Queue()
@@ -38,6 +61,12 @@ class BaseCommandDispatcher:
     def stop(self):
         self.running = False
 
+    def send(self, cmd, param={}):
+        try:
+            d = json.dumps({"cmd":cmd, "param":param})
+        except Exception as e:
+            print e
+        
     # Network thread will call this method.
     def OnReceiveData(self, data=None):
         logger.debug("OnReceiveCmd")
@@ -46,21 +75,6 @@ class BaseCommandDispatcher:
         except Queue.Full:
             logger.error(u"Queue is Full")
             pass
-
-    def _do_ping(self, data=None):
-        logger.debug("_do_ping")
-        self.peer.send("pong")
-
-    def _do_download(self, data=None):
-        logger.debug("_do_download")
-        pass
-
-    def _do_update(self, data=None):
-        logger.debug(u"receive update command.")
-
-    def _do_print(self, data=None):
-        if data is not None:
-            print data
 
 
 #命令处理映射，在这里添加新的命令映射

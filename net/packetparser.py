@@ -1,5 +1,6 @@
 #-*-coding=utf-8-*-
 import string
+import json
 
 HEAD_SIZE = 5 # 前五个字节指名后面的数据包大小 
 HEAD_PAD = '0'# 用于填充前5个字节中的“空位置”
@@ -23,3 +24,34 @@ def unpack(buffer):
             return data
 
     return None
+
+
+def request(cmd, param):
+    try:
+        d = json.dumps({"cmd":cmd, "param":param})
+        return d
+    except Exception as e:
+        print e
+        logger.error(u"编码数据失败 cmd = {}".format(cmd))
+        return None
+
+def response(data):
+    try:
+        l = json.loads(data)
+        if not isinstance(l, "dict"):
+            raise RuntimeError("json.loads return type is not dict")
+        if not hasattr(l, "cmd"):
+            logger.error(u"解码数据失败，找不到cmd属性")
+            return None
+        if not hasattr(l, "param"):
+            logger.error(u"解码数据失败，找不到param属性")
+            return None
+
+        return l["cmd"], l["param"]
+
+    except Exception as e:
+        print e
+        logger.error(u"解码数据出现异常", )
+        return None
+        
+

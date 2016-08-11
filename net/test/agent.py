@@ -6,23 +6,25 @@ from logger import initlogger
 from TcpClient import TcpClient
 from cmddispatch import *
 
-def network_thread_handler(svrSocket):
-    svrSocket.start()
+from AgentCmdHandler import AgentCmdHandler
 
-def logic_thread_handler(dispatcher, svrSocket):
-    dispatcher.run(svrSocket)
+def network_thread_handler(tcpClient):
+    tcpClient.start()
+
+def logic_thread_handler(dispatcher, tcpClient):
+    dispatcher.run(tcpClient)
 
 class Agent:
     def __init__(self, host, port, CmdDispatcherClass):
-        self.dispatcher = CmdDispatcherClass()
-        self.peer = TcpClient((host, port), self.dispatcher)
+        self.dispatcher = CmdDispatcherClass(AgentCmdHandler)
+        self.tcpClient = TcpClient((host, port), self.dispatcher)
 
     def start(self):
         tcpclientThread = threading.Thread(target=network_thread_handler, 
-                name="Network", args=[self.peer])
+                name="Network", args=[self.tcpClient])
 
         cmdDispatchThread = threading.Thread(target=logic_thread_handler, 
-                name="CmdDispatch", args=[self.dispatcher, self.peer])
+                name="CmdDispatch", args=[self.dispatcher, self.tcpClient])
 
         tcpclientThread.start()
         cmdDispatchThread.start()

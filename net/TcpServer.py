@@ -6,22 +6,29 @@ import threading
 import Queue
 import logging
 from TcpConnection import TcpConnection 
+from cmddispatch import *
 
 logger = logging.getLogger("cf")
 
 class TcpServer(asyncore.dispatcher):
 
-    def __init__(self, (host, port)):
+    def __init__(self, (host, port), cmddispatcher):
         logger.debug("TcpServer.__init__")
         asyncore.dispatcher.__init__(self)
         self.host = host
         self.port = port
+        self.clients = {}
+        self.dispatcher = cmddispatch
+
+    def run_forever(self):
+        self._bind()
+        asyncore.loop(1)
+
+    def _bind(self):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
-        self.bind((host, port))
+        self.bind((self.host, self.port))
         self.listen(10)
-        self.clients = {}
-
 
     def handle_accept(self):
         pair = self.accept()
@@ -32,7 +39,6 @@ class TcpServer(asyncore.dispatcher):
             logger.debug(u"{} 请求连接成功".format(addr))
             self.new_connection(sock, addr)
 
-
     def new_connection(self, sock, addr):
         conn = TcpConnection(sock, self)
         self.clients[sock] = conn
@@ -40,6 +46,4 @@ class TcpServer(asyncore.dispatcher):
 
     def remove_connection(self, sock):
         del self.clients[sock]
-
-
 

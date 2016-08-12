@@ -7,6 +7,7 @@ from cmd import Cmd
 import sys
 from TcpClient import TcpClient
 from cmddispatch import *
+from ControllerCmdHandler import ControllerCmdHandler
 
 logger = logging.getLogger("cf")
 
@@ -23,11 +24,13 @@ class Controller(Cmd):
     def __init__(self, host, port, CmdDispatcherClass):
         Cmd.__init__(self)
         self.use_rawinput = False
-        self.dispatcher = CmdDispatcherClass()
+        self.dispatcher = CmdDispatcherClass(ControllerCmdHandler)
         self.peer = TcpClient((host,port), self.dispatcher)
 
     def preloop(self):
-        print(u"Welcome to easydeploy!")
+        print(u"*"*100)
+        print(u"Welcome to use EasyDeploy!")
+        print(u"*"*100)
     
     def postloop(self):
         print(u"Bye!")
@@ -60,6 +63,6 @@ class Controller(Cmd):
 if __name__ == "__main__":
     import sys
     sys.path.append("..")
-    c = Controller("127.0.0.1", 9999, BaseCommandDispatcher)
+    c = Controller("127.0.0.1", 9999, BaseCommandDispatcher, )
     c.start()
 

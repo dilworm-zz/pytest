@@ -6,13 +6,13 @@ from logger import initlogger
 from TcpClient import TcpClient
 from cmddispatch import *
 
-from AgentCmdHandler import AgentCmdHandler
+from AgentCmdHandler import AgentCmdHandler 
 
-def network_thread_handler(tcpClient):
+def network_thread_handler(tcpClient): 
     tcpClient.start()
 
-def logic_thread_handler(dispatcher, tcpClient):
-    dispatcher.run(tcpClient)
+def logic_thread_handler(dispatcher):
+    dispatcher.run()
 
 class Agent:
     def __init__(self, host, port, CmdDispatcherClass):
@@ -24,7 +24,7 @@ class Agent:
                 name="Network", args=[self.tcpClient])
 
         cmdDispatchThread = threading.Thread(target=logic_thread_handler, 
-                name="CmdDispatch", args=[self.dispatcher, self.tcpClient])
+                name="CmdDispatch", args=[self.dispatcher])
 
         tcpclientThread.start()
         cmdDispatchThread.start()

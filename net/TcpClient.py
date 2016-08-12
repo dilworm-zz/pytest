@@ -146,6 +146,7 @@ class TcpClient(asyncore.dispatcher):
             print e
             logger.error(u"接收数据出现异常，将主动断开连接 {}:{} ".format(
                 self.host, self.port))
+            self.peer.close()
 
         
     def handle_close(self): 

@@ -43,8 +43,15 @@ def response(data):
         if not hasattr(l, "cmd"):
             logger.error(u"解码数据失败，找不到cmd属性")
             return None
+        if not isinstance(l["cmd"], str):
+            logger.error(u"解码数据失败，cmd属性值类型不为str")
+            return None
+
         if not hasattr(l, "param"):
             logger.error(u"解码数据失败，找不到param属性")
+            return None
+        if not isinstance(l["param"], dict):
+            logger.error(u"解码数据失败，param属性不为dict")
             return None
 
         return l["cmd"], l["param"]

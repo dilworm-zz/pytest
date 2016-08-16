@@ -23,7 +23,7 @@ class TcpConnection(asyncore.dispatcher):
         self._writeable = True
 
         self.tcpserver = tcpserver # point to the server
-        self.dispatcher = self.tcpserver.dispatcher
+        self.cmddispatcher = self.tcpserver.dispatcher
 
     def _clear(self):
         self.outbufferqueue = Queue.Queue()
@@ -50,7 +50,7 @@ class TcpConnection(asyncore.dispatcher):
                 self.inbuffer = self.inbuffer + s
                 data = pp.unpack(self.inbuffer)
                 if data is not None:
-                    self.cmddispatch.onReceiveData(self, data)
+                    self.cmddispatcher.onReceiveData(self, data)
         except Exception as e :
             logger.error(u"接收数据发生异常,将主动断开{}连接".format(self.addr))
             print e
@@ -62,6 +62,6 @@ class TcpConnection(asyncore.dispatcher):
 
     def handle_close(self):
         logger.info(u"{}:{} 断开连接".format(self.addr[0], self.addr[1]))
-        self.close_callback(self.socket)
+        #self.close_callback(self.socket)
         self.close()
    

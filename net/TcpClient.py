@@ -116,10 +116,10 @@ class TcpClient(asyncore.dispatcher):
             s = self.send(self.outbuffer)
             if s > 0:
                 self.outbuffer = self.outbuffer[s:]
-                print 1
+                #print 1
         elif not self.outbufferqueue.empty():
             try:
-                print 2
+                #print 2
                 item = self.outbufferqueue.get(True, 0.01)
                 self.outbuffer = item[0]
                 s = asyncore.dispatcher.send(self, self.outbuffer)
@@ -129,7 +129,7 @@ class TcpClient(asyncore.dispatcher):
                 pass
         else:
             # no more data to sent
-            print 3
+            #print 3
             self.set_writeable(False)
 
 
@@ -152,7 +152,9 @@ class TcpClient(asyncore.dispatcher):
     def handle_close(self): 
         if self.connecting:
             logger.warn(u"连接{}:{} 失败!".format(self.host, self.port))
-            self.connecting = False elif self.connected: logger.info(u"{} 连接断开".format(self.host))
+            self.connecting = False 
+        elif self.connected: 
+            logger.info(u"{} 连接断开".format(self.host))
             self.connected = False
         self.set_readable(False)
         self.set_writeable(False)

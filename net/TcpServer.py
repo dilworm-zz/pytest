@@ -12,13 +12,14 @@ logger = logging.getLogger("cf")
 
 class TcpServer(asyncore.dispatcher):
 
-    def __init__(self, (host, port), cmddispatcher):
+    def __init__(self, (host, port), commanddispatcher):
         logger.debug("TcpServer.__init__")
         asyncore.dispatcher.__init__(self)
         self.host = host
         self.port = port
         self.clients = {}
-        self.dispatcher = cmddispatch
+        print commanddispatcher
+        self.dispatcher = commanddispatcher
 
     def run_forever(self):
         self._bind()

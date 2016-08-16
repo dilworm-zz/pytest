@@ -7,7 +7,6 @@ from cmd import Cmd
 import sys
 from TcpClient import TcpClient
 from cmddispatch import *
-from ControllerCmdHandler import ControllerCmdHandler
 
 logger = logging.getLogger("cf")
 
@@ -15,22 +14,24 @@ def network_thread_handler(controller):
     controller.peer.start()
 
 def logic_thread_handler(controller):
-    controller.dispatcher.run(controller.peer)
+    controller.dispatcher.run()
 
 def cmdloop_thread_hendler(controller):
     controller.cmdloop()
 
 class Controller(Cmd):
-    def __init__(self, host, port, CmdDispatcherClass):
+    def __init__(self, host, port, CmdHandlerClass):
         Cmd.__init__(self)
         self.use_rawinput = False
-        self.dispatcher = CmdDispatcherClass(ControllerCmdHandler)
+        self.dispatcher = BaseCommandDispatcher(CmdHandlerClass)
         self.peer = TcpClient((host,port), self.dispatcher)
 
     def preloop(self):
-        print(u"*"*100)
-        print(u"Welcome to use EasyDeploy!")
-        print(u"*"*100)
+        logger.info(u"*"*80)
+        logger.info(u"\n")
+        logger.info(u"Welcome to use EasyDeploy!")
+        logger.info(u"\n")
+        logger.info(u"*"*80)
     
     def postloop(self):
         print(u"Bye!")

@@ -44,6 +44,9 @@ class BaseCommandDispatcher:
         self.queue = Queue.Queue()
         self.running = False
 
+    def SetConnectCallback(self, cb):
+        self.connectCallback = cb
+
     def run(self):
         if self.running:
             return
@@ -87,3 +90,5 @@ class BaseCommandDispatcher:
 
     def OnConnectEstablished(self, conn):
         logger.debug("OnConnectEstablished")
+        if self.connectCallback is not None:
+            self.connectCallback(conn)

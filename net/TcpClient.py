@@ -108,8 +108,8 @@ class TcpClient(asyncore.dispatcher):
         #traceback.print_stack()
         logger.debug(u"{0}:{1} 连接成功.".format(self.host, self.port))
         self.set_readable(True)
-        if hasattr(self.cmddispatcher, "OnConnected"):
-            cmddispatcher.OnConnected(self)
+        if hasattr(self.cmddispatcher, "OnConnectEstablished"):
+            self.cmddispatcher.OnConnectEstablished(self)
 
     def handle_write(self):
         if len(self.outbuffer) > 0:

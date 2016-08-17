@@ -5,6 +5,7 @@ import logging
 from logger import initlogger
 from TcpClient import TcpClient
 from cmddispatch import *
+import packetparser as pp
 
 
 def network_thread_handler(tcpClient): 
@@ -16,7 +17,12 @@ def logic_thread_handler(dispatcher):
 class Agent:
     def __init__(self, host, port, CmdHandlerClass):
         self.dispatcher = BaseCommandDispatcher(CmdHandlerClass)
+        self.dispatcher.SetConnectCallback(self.OnConnected)
         self.tcpClient = TcpClient((host, port), self.dispatcher)
+
+    def OnConnected(self, conn):
+        req = pp.request("login", {"type":"agent", "name":"a1"})
+        conn.send(req)
 
     def start(self):
         cmdDispatchThread = threading.Thread(target=logic_thread_handler, 

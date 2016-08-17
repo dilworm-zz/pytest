@@ -4,6 +4,7 @@ import Queue
 import time
 import threading
 import json
+import packetparser as pp
 
 logger = logging.getLogger("cf")
 
@@ -12,23 +13,23 @@ logger = logging.getLogger("cf")
 class BaseCommandHandler:
     def __init__(self, owner):
         self.owner = owner
-        self.send = self.owner
 
-    def _do_ping(self, conn, data=None):
+    def _do_ping(self, conn, data={}):
         logger.debug("_do_ping")
-        self.owner.send("pong")
+        req = pp.request("pong", {})
+        conn.send(req)
 
-    def _do_pong(self, conn, data=None):
+    def _do_pong(self, conn, data={}):
         logger.debug("_do_pong")
 
-    def _do_download(self, conn, data=None):
+    def _do_download(self, conn, data={}):
         logger.debug("_do_download")
         pass
 
-    def _do_update(self, conn, data=None):
+    def _do_update(self, conn, data={}):
         logger.debug(u"receive update command.")
 
-    def _do_print(self, conn, data=None):
+    def _do_print(self, conn, data={}):
         if data is not None:
             print data
 
@@ -51,34 +52,38 @@ class BaseCommandDispatcher:
         while self.running:
             try:
                 item = self.queue.get()
-                func = None
                 peer, data = item[0],item[1]
                 pair = pp.response(data)
                 if (pair is not None):
                     cmd, param = pair
-                    if self.handler.hasattr("_do_" + cmd):
+                    if hasattr(self.handler, "_do_" + cmd):
                         getattr(self.handler, "_do_" + cmd)(peer, param)
                     else:
                         logger.error(u"找不到 '{}'的处理函数".format(cmd))
-            except:
-                logger.error("handle command error")
+            except Exception as e:
+                #import traceback as tb
+                #tb.print_stack()
+                print e
+                logger.error("handle command error:{}".format(e))
 
     def stop(self):
         self.running = False
 
-    def send(self, peer, cmd, param={}):
+    def send(self, conn, cmd, param={}):
         try:
             assert(isinstance(cmd, str))
             d = json.dumps({"cmd":cmd, "param":param})
-            peer.send(d)
+            conn.send(d)
         except Exception as e:
             print e
         
-    # Network thread will call this method.
-    def OnReceiveData(self, peer, data=None):
+    # Network thread will call these methodes.
+    def OnReceiveData(self, conn, data=None):
         logger.debug("OnReceiveData")
         try:
-            self.queue.put_nowait((peer, data, time.time()))
+            self.queue.put_nowait((conn, data, time.time()))
         except Queue.Full:
             logger.error(u"Queue is Full")
 
+    def OnConnectEstablished(self, conn):
+        logger.debug("OnConnectEstablished")

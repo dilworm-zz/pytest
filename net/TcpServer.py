@@ -18,7 +18,6 @@ class TcpServer(asyncore.dispatcher):
         self.host = host
         self.port = port
         self.clients = {}
-        print commanddispatcher
         self.dispatcher = commanddispatcher
 
     def run_forever(self):

@@ -31,6 +31,16 @@ class TcpConnection(asyncore.dispatcher):
         self.inbuffer = ""
         self.outbuffer = ""
 
+    def send(self, data):
+        try:
+            packed = pp.pack(data)
+            self.outbufferqueue.put((packed, time.time()))
+            self.set_writeable(True)
+            return True
+        except Queue.Full:
+            logger.error("add data to qeueu FAILED!")
+            return False
+
     def set_readable(self, r):
         self._readable = r
 
@@ -50,7 +60,7 @@ class TcpConnection(asyncore.dispatcher):
                 self.inbuffer = self.inbuffer + s
                 data = pp.unpack(self.inbuffer)
                 if data is not None:
-                    self.cmddispatcher.onReceiveData(self, data)
+                    self.cmddispatcher.OnReceiveData(self, data)
         except Exception as e :
             logger.error(u"接收数据发生异常,将主动断开{}连接".format(self.addr))
             print e
@@ -58,7 +68,25 @@ class TcpConnection(asyncore.dispatcher):
             self._clear()
     
     def handle_write(self):
-        pass
+        if len(self.outbuffer) > 0:
+            s = self.send(self.outbuffer)
+            if s > 0:
+                self.outbuffer = self.outbuffer[s:]
+                #print 1
+        elif not self.outbufferqueue.empty():
+            try:
+                #print 2
+                item = self.outbufferqueue.get(True, 0.01)
+                self.outbuffer = item[0]
+                s = asyncore.dispatcher.send(self, self.outbuffer)
+                if s > 0:
+                    self.outbuffer = self.outbuffer[s:]
+            except Queue.Empty:
+                pass
+        else:
+            # no more data to sent
+            #print 3
+            self.set_writeable(False)
 
     def handle_close(self):
         logger.info(u"{}:{} 断开连接".format(self.addr[0], self.addr[1]))

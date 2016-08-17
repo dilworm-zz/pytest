@@ -108,8 +108,8 @@ class TcpClient(asyncore.dispatcher):
         #traceback.print_stack()
         logger.debug(u"{0}:{1} 连接成功.".format(self.host, self.port))
         self.set_readable(True)
-        if hasattr(self.cmddispatcher, "handle_connect"):
-            cmddispatcher.handle_connect()
+        if hasattr(self.cmddispatcher, "OnConnected"):
+            cmddispatcher.OnConnected(self)
 
     def handle_write(self):
         if len(self.outbuffer) > 0:
@@ -137,11 +137,10 @@ class TcpClient(asyncore.dispatcher):
         try:
             s = self.recv(4096)
             if len(s) > 0:
-                print s
                 self.inbuffer = self.inbuffer + s
                 data = pp.unpack(self.inbuffer)
                 if data is not None:
-                    self.cmddispatcher.onReceiveData(data)
+                    self.cmddispatcher.OnReceiveData(self, data)
         except Exception as e:
             print e
             logger.error(u"接收数据出现异常，将主动断开连接 {}:{} ".format(

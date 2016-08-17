@@ -8,6 +8,8 @@ import sys
 from TcpClient import TcpClient
 from cmddispatch import *
 
+
+
 logger = logging.getLogger("cf")
 
 def network_thread_handler(controller):
@@ -37,9 +39,33 @@ class Controller(Cmd):
         print(u"Bye!")
 
     def do_ed(self, line):
-        print "do_ed"
-        self.peer.send(line)
-        print line
+        print "ed"
+        if line is None:
+            return 
+
+        inputs = line.split()
+        cnt = len(inputs)
+        if cnt < 1:
+            print u"命令无效: \"", line , u"\""
+            return 
+
+        # 分割出命令和参数 
+        cmd = inputs[0]
+        param = {}
+
+        if cnt > 1:
+            for i in range(1, cnt):
+                param[str(i)] = inputs[i]
+
+        req = pp.request("agent_cmd", {"cmd":cmd, "param":param})
+        print req
+        self.peer.send(req)
+
+    def do_ping(self, line):
+        print "do_ping"
+        req = pp.request("ping", {})
+        if req is not None:
+            self.peer.send(req)
 
     def do_exit(self, line):
         import os

@@ -1,10 +1,14 @@
 #-*-coding=utf-8-*-
 import string
 import json
+import logging
 
 HEAD_SIZE = 5 # 前五个字节指名后面的数据包大小 
 HEAD_PAD = '0'# 用于填充前5个字节中的“空位置”
 MAX_SEND_SIZE = 4096 - HEAD_SIZE
+
+
+logger = logging.getLogger("cf")
 
 def pack(data):
     dataSize = len(data)
@@ -37,17 +41,18 @@ def request(cmd, param):
 
 def response(data):
     try:
+        print "response : ", data
         l = json.loads(data)
-        if not isinstance(l, "dict"):
+        if not isinstance(l, dict):
             raise RuntimeError("json.loads return type is not dict")
-        if not hasattr(l, "cmd"):
+        if "cmd" not in l:
             logger.error(u"解码数据失败，找不到cmd属性")
             return None
-        if not isinstance(l["cmd"], str):
-            logger.error(u"解码数据失败，cmd属性值类型不为str")
+        if not isinstance(l["cmd"], unicode):
+            logger.error(u"解码数据失败，cmd属性值类型不为unicode")
             return None
 
-        if not hasattr(l, "param"):
+        if "param" not in l:
             logger.error(u"解码数据失败，找不到param属性")
             return None
         if not isinstance(l["param"], dict):
@@ -58,7 +63,7 @@ def response(data):
 
     except Exception as e:
         print e
-        logger.error(u"解码数据出现异常", )
+        logger.error(u"解码数据出现异常")
         return None
         
 

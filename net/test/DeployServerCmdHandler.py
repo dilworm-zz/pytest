@@ -40,15 +40,22 @@ class DeployServerCmdHandler(cmddispatch.BaseCommandHandler):
         cmddispatch.BaseCommandHandler.__init__(self, owner)
         self.clientManager = ClientManager()
 
-    def _do_pong(self, peer, data):
+    def _do_pong(self, conn, data):
         logger.debug("recv pong")
 
-    def _do_login(self, peer, data):
+    def _do_login(self, conn, data):
         type, name = data["type"], data["name"]
-        self.clientManager.AddClient(type, name)
+        self.clientManager.AddClient(type, name, conn)
 
-        loggger.debug(u"收到 {0} 注册: {1}".format(type, name))
+        logger.debug(u"收到 {0} 注册: {1}".format(type, name))
+        if type == "agent":
+            logger.debug(u"当前总 {0} 数为{1}".format(type, len(self.clientManager.GetAgents())))
+        elif type == "controler":
+            logger.debug(u"当前总 {0} 数为{1}".format(type, len(self.clientManager.GetControlers())))
 
+
+    ########################################################
+    #
     # 转发controler的命令到所有agent
     def _do_agent_cmd(self, peer, data):
         logger.debug(u"_do_agent_cmd")

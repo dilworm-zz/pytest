@@ -3,6 +3,7 @@ import configparser as cf
 import redisinfocollector as ric
 import redisreplyhandler as rrh
 import time, logging
+
 def initlogger():
     FORMAT = "%(asctime)s [%(levelname)-.7s] %(message)s"
     logFormatter = logging.Formatter(FORMAT)

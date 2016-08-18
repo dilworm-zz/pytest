@@ -8,10 +8,7 @@ import Queue,logging
 logger = logging.getLogger("cf")
 
 CONN_TIMEOUT = 15
-
-class RedisClient(asyncore.dispatcher):
-    redis_reply = ''# redis reply, bulk strings
-    recv_size = 0
+class RedisClient(asyncore.dispatcher): redis_reply = ''# redis reply, bulk strings recv_size = 0
     wflag = False
     rflag = False # prevent being pushed into poll readable list before invoke connect() 
     queue = Queue.Queue()

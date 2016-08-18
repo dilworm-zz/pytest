@@ -4,8 +4,7 @@ import Queue
 import time
 import threading
 import json
-import packetparser as pp
-
+import packetparser as pp 
 logger = logging.getLogger("cf")
 
 # Generally, you should driverd from BaseCommandHandler and impletement 
@@ -82,7 +81,7 @@ class BaseCommandDispatcher:
         
     # Network thread will call these methodes.
     def OnReceiveData(self, conn, data=None):
-        logger.debug("OnReceiveData")
+        #logger.debug("OnReceiveData")
         try:
             self.queue.put_nowait((conn, data, time.time()))
         except Queue.Full:
@@ -92,3 +91,8 @@ class BaseCommandDispatcher:
         logger.debug("OnConnectEstablished")
         if self.connectCallback is not None:
             self.connectCallback(conn)
+
+    def OnConnectClose(self, conn):
+        logger.debug(u"dispatcher OnConnectClose")
+        self.handler.OnConnectClose(conn)
+

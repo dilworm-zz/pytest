@@ -13,7 +13,7 @@ logger = logging.getLogger("cf")
 class TcpServer(asyncore.dispatcher):
 
     def __init__(self, (host, port), commanddispatcher):
-        logger.debug("TcpServer.__init__")
+        #logger.debug("TcpServer.__init__")
         asyncore.dispatcher.__init__(self)
         self.host = host
         self.port = port
@@ -42,6 +42,7 @@ class TcpServer(asyncore.dispatcher):
     def new_connection(self, sock, addr):
         conn = TcpConnection(sock, self)
         self.clients[sock] = conn
+        conn.setCloseCallback(self.dispatcher.OnConnectClose)
         conn.handle_connect()
 
     def remove_connection(self, sock):

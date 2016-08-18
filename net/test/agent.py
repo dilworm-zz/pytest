@@ -21,7 +21,7 @@ class Agent:
         self.dispatcher.SetConnectCallback(self.OnConnected)
 
     def OnConnected(self, conn):
-        req = pp.request("login", {"type":"agent", "name":"a1"})
+        req = pp.request("login", {"type":"agent", "name":self.name})
         conn.send(req)
 
     def loadconfig(self):

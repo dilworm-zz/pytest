@@ -25,6 +25,9 @@ class TcpConnection(asyncore.dispatcher):
         self.tcpserver = tcpserver # point to the server
         self.cmddispatcher = self.tcpserver.dispatcher
 
+    def setCloseCallback(self, cb):
+        self.closeCallback = cb
+
     def _clear(self):
         self.outbufferqueue = Queue.Queue()
         self.inbufferqueue = Queue.Queue()
@@ -90,6 +93,6 @@ class TcpConnection(asyncore.dispatcher):
 
     def handle_close(self):
         logger.info(u"{}:{} 断开连接".format(self.addr[0], self.addr[1]))
-        #self.close_callback(self.socket)
+        self.closeCallback(self)
         self.close()
    

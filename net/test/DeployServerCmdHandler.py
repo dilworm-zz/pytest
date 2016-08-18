@@ -71,4 +71,6 @@ class DeployServerCmdHandler(cmddispatch.BaseCommandHandler):
         for n, p in self.clientManager.controllers():
             p.send(data)
     
+    def OnConnectClose(self, conn):
+        logger.debug("handler OnConnectClose")
 

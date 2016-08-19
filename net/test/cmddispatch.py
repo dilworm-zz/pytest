@@ -1,5 +1,5 @@
 #-*-coding=utf-8-*-
-import logging
+import logging 
 import Queue
 import time
 import threading
@@ -56,6 +56,7 @@ class BaseCommandDispatcher:
                 item = self.queue.get()
                 peer, data = item[0],item[1]
                 pair = pp.response(data)
+                #print pair
                 if (pair is not None):
                     cmd, param = pair
                     if hasattr(self.handler, "_do_" + cmd):
@@ -63,8 +64,8 @@ class BaseCommandDispatcher:
                     else:
                         logger.error(u"找不到 '{}'的处理函数".format(cmd))
             except Exception as e:
-                #import traceback as tb
-                #tb.print_stack()
+                import traceback as tb
+                tb.print_stack()
                 print e
                 logger.error("handle command error:{}".format(e))
 

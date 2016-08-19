@@ -18,12 +18,14 @@ def logic_thread_handler(dispatcher):
 class Agent:
     def __init__(self, CmdHandlerClass):
         self.dispatcher = BaseCommandDispatcher(CmdHandlerClass)
-        self.dispatcher.SetConnectCallback(self.OnConnected)
+        self.dispatcher.SetConnectCallback(self.OnConnect)
 
-    def OnConnected(self, conn):
+    # 连接服务器成功发登陆命令
+    def OnConnect(self, conn):
         req = pp.request("login", {"type":"agent", "name":self.name})
         conn.send(req)
 
+    # 加载配置
     def loadconfig(self):
         config = cp.ConfigParser()
         config.read("./config/agent.config")
@@ -39,7 +41,7 @@ class Agent:
         self.tcpClient = TcpClient((self.host, self.port), self.dispatcher)
 
         cmdDispatchThread = threading.Thread(target=logic_thread_handler, 
-                name="CmdDispatch", args=[self.dispatcher])
+                name="logic", args=[self.dispatcher])
         tcpclientThread = threading.Thread(target=network_thread_handler, 
                 name="Network", args=[self.tcpClient])
 
@@ -50,16 +52,3 @@ class Agent:
 
 
 # TODO: Run agent as a deamon service.
-if __name__ == "__main__":
-    import sys
-    sys.path.append("..")
-
-    from AgentCmdHandler import AgentCmdHandler 
-    initlogger("./log/client")
-    logger = logging.getLogger("cf")
-
-    agent = Agent("127.0.0.1", 9999, AgentCmdHandler)
-    agenk.start()
-
-    logger.info("agent exit.")
-

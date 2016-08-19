@@ -2,7 +2,7 @@
 import cmddispatch
 import logging
 import packetparser as pp
-
+import time
 logger = logging.getLogger("cf")
 
 
@@ -13,32 +13,40 @@ class ClientManager:
         self.controllers = {}
         pass
 
-    def AddClient(self, type, name, conn):
+    def AddClient(self, type, name, conn): 
         if type == "agent":
-            assert(name not in self.agents)
-            self.agents[name] = conn
+            assert(conn not in self.agents)
+            self.agents[conn] = (name, type, time.time())
         elif type == "controller":
-            assert(name not in self.controllers)
-            self.controllers[name] = conn
+            assert(conn not in self.controllers)
+            self.controllers[conn] = (name, type, time.time())
 
-    def RemoveClient(self, type, name):
-        if type == "agent":
-            assert(name in self.agents)
-            del self.agents[name]
-        elif type == "controller":
-            assert(name in self.controllers)
-            del self.controllers[name]
+    def RemoveClient(self, conn):
+        name, type, remainCnt = None, None, None
+        if conn in self.agents:
+            name = self.agents[conn][0]
+            type = self.agents[conn][1]
+            remainCnt = len(self.agents) - 1
+            del self.agents[conn]
+        elif conn in self.controllers:
+            name = self.controllers[conn][0] 
+            type = self.controllers[conn][1]
+            remainCnt = len(self.controllers) - 1
+            del self.controllers[conn] 
+        return name, type, remainCnt
 
     def GetAgents(self):
         return self.agents
 
     def GetControlers(self):
-        return self.controlers
+        return self.controllers
 
+# 业务处理类
 class DeployServerCmdHandler(cmddispatch.BaseCommandHandler):
     def __init__(self, owner):
         cmddispatch.BaseCommandHandler.__init__(self, owner)
         self.clientManager = ClientManager()
+        self.clients = {}
 
     def _do_pong(self, conn, data):
         logger.debug("recv pong")
@@ -47,23 +55,27 @@ class DeployServerCmdHandler(cmddispatch.BaseCommandHandler):
         type, name = data["type"], data["name"]
         self.clientManager.AddClient(type, name, conn)
 
-        logger.debug(u"收到 {0} 注册: {1}".format(type, name))
+        logger.info(u"收到 {0} 注册: {1}".format(type, name))
+
         if type == "agent":
-            logger.debug(u"当前总 {0} 数为{1}".format(type, len(self.clientManager.GetAgents())))
-        elif type == "controler":
-            logger.debug(u"当前总 {0} 数为{1}".format(type, len(self.clientManager.GetControlers())))
+            logger.info(u"当前总 {0} 数为{1}".format(type, len(self.clientManager.GetAgents())))
+        elif type == "controller":
+            logger.info(u"当前总 {0} 数为{1}".format(type, len(self.clientManager.GetControlers())))
 
 
     ########################################################
     #
-    # 转发controler的命令到所有agent
+    # 转发controler的命令给所有agent
     def _do_agent_cmd(self, peer, data):
-        logger.debug(u"_do_agent_cmd")
         cmd, param = data["cmd"], data["param"]
-        print cmd, param
-        for n, p in self.clientManager.GetAgents():
-            print "send agent cmd"
-            #p.send(data)
+        logger.debug(u"_do_agent_cmd :'{}' ".format(cmd))
+        #print cmd, param
+        a = self.clientManager.GetAgents()
+        for conn, _ in a.items():
+            req = pp.request(cmd, param)
+            #print req
+            conn.send(req)
+            
 
     # agent 执行命令后的返回
     def _do_agent_response(self, peer, data):
@@ -72,5 +84,9 @@ class DeployServerCmdHandler(cmddispatch.BaseCommandHandler):
             p.send(data)
     
     def OnConnectClose(self, conn):
-        logger.debug("handler OnConnectClose")
+        logger.debug("DeployServerCmdHandler OnConnectClose")
+        ret = self.clientManager.RemoveClient(conn)
+        if ret is not None:
+            logger.info(u"'{}'断开连接".format(ret[0]))
+            logger.info(u"当前总 {0} 数为{1}".format(ret[1], ret[2]))
 

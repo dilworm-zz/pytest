@@ -4,13 +4,13 @@ import socket
 import time 
 import threading 
 import Queue 
-import logging
-import traceback
-import packetparser as pp
-
+import logging 
+import traceback 
+import packetparser as pp 
 logger = logging.getLogger("cf")
 
-CONNECT_INTERVAL = 5 # reconnect timeout. seconds
+CONNECT_INTERVAL = 5 # reconnect timeout. seconds 
+
 
 def timer_check_connection(conn):
     if not (conn.is_connected() or conn.is_connecting()):
@@ -138,8 +138,11 @@ class TcpClient(asyncore.dispatcher):
             s = self.recv(4096)
             if len(s) > 0:
                 self.inbuffer = self.inbuffer + s
-                data = pp.unpack(self.inbuffer)
-                if data is not None:
+                pair = pp.unpack(self.inbuffer)
+                if pair is not None:
+                    data = pair[0]
+                    endindex = pair[1]
+                    self.inbuffer = self.inbuffer[endindex:]
                     self.cmddispatcher.OnReceiveData(self, data)
         except Exception as e:
             print e

@@ -61,8 +61,11 @@ class TcpConnection(asyncore.dispatcher):
             s = self.recv(4096)
             if len(s) > 0:
                 self.inbuffer = self.inbuffer + s
-                data = pp.unpack(self.inbuffer)
-                if data is not None:
+                pair = pp.unpack(self.inbuffer)
+                if pair is not None:
+                    data = pair[0]
+                    endindex = pair[1]
+                    self.inbuffer = self.inbuffer[endindex:]
                     self.cmddispatcher.OnReceiveData(self, data)
         except Exception as e :
             logger.error(u"接收数据发生异常,将主动断开{}连接".format(self.addr))

@@ -25,7 +25,7 @@ def unpack(buffer):
         bufSize = int(buffer[:HEAD_SIZE])
         if len(buffer[HEAD_SIZE:]) >= bufSize:
             data = buffer[HEAD_SIZE: HEAD_SIZE + bufSize]
-            return data
+            return data, HEAD_SIZE + bufSize
 
     return None
 
@@ -41,7 +41,7 @@ def request(cmd, param):
 
 def response(data):
     try:
-        print "response : ", data
+        #print "response : ", data
         l = json.loads(data)
         if not isinstance(l, dict):
             raise RuntimeError("json.loads return type is not dict")

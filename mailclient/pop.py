@@ -28,9 +28,9 @@ class MailBox:
 
 def main(argv):
     try:
-        host, port = "pop3.lkgame.com", 110
-        user = "yanggaodi@lkgame.com"
-        pwd = "gaodi583"
+        host, port = "pop3.game.com", 110
+        user = "xx@game.com"
+        pwd = "xxx"
 
         lk = MailBox(host, port)
         lk.login(user, pwd)

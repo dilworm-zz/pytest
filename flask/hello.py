@@ -1,3 +1,4 @@
+# -*-coding=utf8-*-
 from flask import Flask
 from flask import request 
 from flask import current_app
@@ -13,11 +14,6 @@ def index():
     ret = ret + "current_app = %s\n"%(current_app.name)
     return ret
 
-# 使用模板
-@app.route("/user/<name>")
-def user(name):
-    return render_template('user.html', name=name)
-
 @app.route("/oauth/<platform>")
 def oauth_platform(platform):
     return "oauth platform %s" % platform
@@ -31,6 +27,16 @@ def make_response():
     response = make_response('<h1>This is make_response</h1>')
     response.set_cookie("answer", "yes")
     return response
+
+# 使用模板
+@app.route("/user/<name>")
+def user(name):
+    #return render_template('user.html', name=name)
+    return render_template('derived.html', name=name, title="88888")
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 400
 
 if __name__ == "__main__":
     app.run(debug=True)
